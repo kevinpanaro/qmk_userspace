@@ -589,14 +589,21 @@ enum raw_hid_commands {
 */
 #if RAW_ENABLE
 
-enum hid_requests {
+enum action {
     SET=1,
     GET=2,
 };
 
-enum status_requests {
+enum status_report {
     CONNECT=0,
     DISCONNECT=1
+};
+
+enum feature {
+    OLED=0x1,
+};
+enum oled_driver {
+    ALL=0x1,
 };
 enum action_requests {
     OLED_ACTION=1,
@@ -759,30 +766,43 @@ void set_action(uint8_t *data) {
 //             break;
 //     }
 // }
+void oled_set_report(uint8_t *data, uint8_t *response) {
+    switch (data[2]) {
+    }
+}
 
-void set(uint8_t *data, uint8_t *response) {
-    switch (data[1]) {
-        case CONNECT:
-            is_hid_connected = true;
-            response[0] = 0x3;
-            break;
-        case DISCONNECT:
-            is_hid_connected = false;
-            response[0] = 0x4;
+void oled_get_report(uint8_t *data, uint8_t *response) {
+    switch (data[2]) {
+        case ALL:
+            response[0] = OLED_DISPLAY_WIDTH;
+            response[1] = OLED_DISPLAY_HEIGHT;
+            // response[2] = OLED_MATRIX_SIZE;
+            // response[3] = OLED_BLOCK_TYPE;
+            response[4] = OLED_BLOCK_COUNT;
+            // response[5] = OLED_BLOCK_SIZE;
             break;
     }
 }
+
+void oled_report(uint8_t *data, uint8_t *response) {
+    switch (data[1]) {
+        case SET:
+            oled_set_report(data, response);
+            break;
+        case GET:
+            oled_get_report(data, response);
+            break;
+    }
+}
+
 
 void raw_hid_receive(uint8_t *data, uint8_t length) {
     uint8_t response[length];
     memset(response, 0, length);
 
     switch (data[0]) {
-        case SET:
-            set(data, response);
-            break;
-        case GET:
-            // get(data, response);
+        case OLED:
+            oled_report(data, response);
             break;
     }
     raw_hid_send(response, length);
