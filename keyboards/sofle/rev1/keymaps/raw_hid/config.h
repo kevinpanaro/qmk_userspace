@@ -75,10 +75,16 @@ for more options.
 
 // oled definitions
 #define SPLIT_OLED_ENABLE
-//#define SPLIT_LAYER_STATE_ENABLE
-// #define SPLIT_TRANSPORT_MIRROR
-// #define SPLIT_LED_STATE_ENABLE
-// #define SPLIT_MODS_ENABLE
+#define SPLIT_LAYER_STATE_ENABLE
+#define SPLIT_TRANSPORT_MIRROR
+#define SPLIT_LED_STATE_ENABLE
+#define SPLIT_MODS_ENABLE
+
 #define OLED_BRIGHTNESS 128
 #define OLED_FADE_OUT
 #define OLED_TIMEOUT 10000
+
+// Custom Logo
+#define OLED_FONT_H "font.c"
+#define ENCODER_RESOLUTIONS { 4 }
+#define ENCODER_RESOLUTIONS_RIGHT { 4 }

@@ -50,10 +50,10 @@ enum custom_keycodes {
     KC_LSTRT,
     KC_LEND,
     KC_DLINE,
-    KC_SUPRG
+    KC_SUPRG,
+    KC_M20RR,
+    KC_NO_TIME,
 };
-
-
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -120,8 +120,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 
 [_VALORANT] = LAYOUT(
-  KC_ESC  ,     KC_T,    KC_1,    KC_2,    KC_3,    KC_4,                     KC_6,    KC_7,    KC_8,    KC_9,    KC_0,  KC_MINS,
-  KC_TAB  ,   KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,                     KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,  KC_BSPC,
+  KC_ESC  ,     KC_T,    KC_1,    KC_2,    KC_3,    KC_4,                     KC_NO_TIME, KC_7,    KC_8,    KC_9,    KC_0,  KC_MINS,
+  KC_TAB  ,   KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,                     KC_M20RR,   KC_U,    KC_I,    KC_O,    KC_P,  KC_BSPC,
   KC_CAPS ,  KC_CAPS,    KC_A,    KC_S,    KC_D,    KC_F,                     KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN,  KC_QUOT,
   KC_LCTL ,  KC_LSFT,    KC_Z,    KC_X,    KC_C,    KC_B, KC_MUTE,    KC_MPLY,KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH,  KC_RSFT,
                 _______,KC_LALT, KC_G,   KC_LCTL,    KC_SPC,           KC_ENT,  _______, KC_RGUI, KC_RALT, KC_RCTL
@@ -245,13 +245,15 @@ void activate_layer(uint8_t layer) {
 
 #ifdef OLED_ENABLE
 static void render_logo(void) {
-    static const char PROGMEM raw_logo[] = {
-        0,  0,  0,252,252,252,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,252,252,252,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,128,128,128,128,192,192,192,192,224,224,224,224,224,224, 96, 96, 96, 96,240,240,112,112,112,112, 96, 96,224,224,192,128,128,  0,  0,  0,  0,  0,
-        0,  0,  0,255,255,255,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,255,255,255,  0,  0,  0,  0,  0,  0,  0,  0,  0,128,192,224, 96, 48, 48, 56, 24, 28, 28, 60, 46,102,198,135,  3,  3,  3,  1,  1,  3,  3,  3,  7,  5, 12, 24, 48,224,128,  0,  0,  0,  0,  0,  0,  0,  1,  1,  3,  6, 28,112,  0,  0,  0,  1,  3,  7,255,254,248,  0,  0, 
-        0,  0,  0,255,255,255,255,  7,  7,  7,  7,  7,255,255,255,  0,255,255,255,  7,  7,  7,  7,  7,  7,  7,  0,255,255,255,199,199,199,199,199,199,255,255,255,  0,199,199,199,199,199,199,199,199,199,255,255,255,  0,255,255,255,  7,  7,  7,  7,  7,255,255,255,255,  0,  0,  0,  0,  0,248,252,254, 15,  3,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  3,  6,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,128,128,192,240,255, 63, 15,  0,  0, 
-        0,  0,  0, 63, 63, 63, 63, 56, 56, 56, 56, 56, 63, 63, 63,  0, 63, 63, 63,  0,  0,  0,  0,  0,  0,  0,  0, 63, 63, 63, 57, 57, 57, 57, 57, 57, 57, 57, 57,  0, 63, 63, 63, 57, 57, 57, 57, 57, 63, 63, 63, 63,  0, 63, 63, 63, 56, 56, 56, 56, 56, 63, 63, 63, 63,  0,  0,  0,  0,  0,  3, 15, 15, 30, 28, 28, 60, 60, 56, 56,120,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,120, 56, 56, 56, 56, 60, 60, 60, 28, 30, 30, 14, 15, 15,  7,  7,  3,  1,  0,  0,  0,  0,  0,
+    static const char PROGMEM qmk_logo[] = {
+        // 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE, 0xDE,
+        0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91, 0x92, 0x93, 0x94,
+        0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4,
+        0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0x00
     };
-    oled_write_raw_P(raw_logo, sizeof(raw_logo));
+    oled_advance_page(true);
+    oled_write_P(qmk_logo, false);
+    oled_set_brightness(oled_get_brightness());
 }
 
 #ifdef RGB_MATRIX_ENABLE        
@@ -357,6 +359,8 @@ static void print_status_narrow(void) {
     #if OS_DETECTION_ENABLE
     process_detected_host_os_kb(detected_host_os() );
     #endif  // OS_DETECTION_ENABLE
+    oled_write_P(PSTR("B-"), false);
+    oled_write(get_u8_str(oled_get_brightness(), ' '), false);
     // render_rgb_status();
     //oled_write_P(PSTR("\n\n"), false);
 }
@@ -379,8 +383,6 @@ bool oled_task_user(void) {
     }
     return false;
 }
-
-
 
 #endif // OLED_ENABLE
 
@@ -499,19 +501,37 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 tap_code_delay(KC_SPC, 7);
                 tap_code(KC_LCTL);
             }
+            break;
+        case KC_M20RR:
+        // Originally I wanted this to be built in, but instead for space and speed
+        //  I just added it to WinCompose Sequences.
+            if (record->event.pressed) {
+                tap_code(KC_RALT);
+                tap_code(KC_MINUS);
+                tap_code(KC_2);
+                tap_code(KC_0);
+            }    
+            break;  
+        case KC_NO_TIME:
+            if (record->event.pressed) {
+                register_code(KC_LSFT);
+                tap_code(KC_ENT);
+                unregister_code(KC_LSFT);
+                SEND_STRING("NO TIME");
+                tap_code(KC_ENT);
+            }
+            break;
     }
     return true;
 }
 
 #ifdef ENCODER_ENABLE
-
+uint8_t mod_state;
+uint8_t brightness_step = 0x10;
 bool encoder_update_user(uint8_t index, bool clockwise) {
-    uint8_t temp_mod = get_mods();
-    uint8_t temp_osm = get_oneshot_mods();
-    bool    is_ctrl  = (temp_mod | temp_osm) & MOD_MASK_CTRL;
-    bool    is_shift = (temp_mod | temp_osm) & MOD_MASK_SHIFT;
-
-    if (is_shift) {
+    mod_state = get_mods();
+    
+    if (mod_state & MOD_MASK_SHIFT) {
 
         #ifdef RGB_MATRIX_ENABLE
 
@@ -531,28 +551,27 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
 
         #endif
 
-    } else if (is_ctrl) {
+    } else if (mod_state & MOD_MASK_CTRL) {
 
         // #ifdef RGB_MATRIX_ENABLE
 
-        if (index == 0) { /* First encoder */
+        // if (index == 0) { /* First encoder */
             if (clockwise) {
-                oled_set_brightness(oled_get_brightness() + 0x10);
+                if ((oled_get_brightness() + brightness_step) <= OLED_BRIGHTNESS) {
+                    oled_set_brightness(oled_get_brightness() + brightness_step);
+                } else {
+                    oled_set_brightness(OLED_BRIGHTNESS);
+                }
             } else {
-                oled_set_brightness(oled_get_brightness() - 0x10);
-            }}
-        // } else if (index == 1) { /* Second encoder */
-        //     if (clockwise) {
-        //         rgb_matrix_increase_speed();
-        //     } else {
-        //         rgb_matrix_decrease_speed();
-        //     }
+                if (oled_get_brightness() > brightness_step) {
+                    oled_set_brightness(oled_get_brightness() - brightness_step);
+                } else {
+                    oled_set_brightness(0x00);
+                }
+            }
         // }
-
-        // #endif
-
     } else {
-        if (index == 1) { /* First encoder */
+        if (index == 0) { /* First encoder */
             if (clockwise) {
                 tap_code(KC_PGUP);
                 // tap_code(KC_MS_WH_UP);
@@ -560,17 +579,15 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
                 tap_code(KC_PGDN);
                 // tap_code(KC_MS_WH_DOWN);
             }
-        } else if (index == 0) { /* Second encoder */
-            uint16_t mapped_code        = 0;
+        } else if (index == 1) { /* Second encoder */
             if (clockwise) {
-                mapped_code = KC_VOLU;
+                tap_code(KC_VOLU);
             } else {
-                mapped_code = KC_VOLD;
+                tap_code(KC_VOLD);
             }
-            tap_code_delay(mapped_code, MEDIA_KEY_DELAY);
         }
     }
-    return true;
+    return false;  // don't allow keyboard/core level encoder code to run.
 }
 
 #endif
