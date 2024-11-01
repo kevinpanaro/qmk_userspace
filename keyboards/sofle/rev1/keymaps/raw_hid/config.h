@@ -22,10 +22,18 @@ for more options.
 
 // #define RGB_DI_PIN D3
 
-#ifdef RGB_MATRIX_ENABLE
+#if defined(RGB_MATRIX_ENABLE) || defined(RGBLIGHT_ENABLE)
+#undef RGBLIGHT_LED_COUNT
+#define RGBLIGHT_LED_COUNT 71 // when soldering i destroyed the pad of the right side indicator. which is why this is 71. changes also made in rev 1
 
-#define RGBLED_NUM 71 // when soldering i destroyed the pad of the right side indicator. which is why this is 71. changes also made in rev 1
-#define DRIVER_LED_TOTAL RGBLED_NUM
+#undef RGB_MATRIX_SPLIT
+#define RGB_MATRIX_SPLIT {36,35}
+#undef RGBLED_SPLIT
+#define RGBLED_SPLIT RGB_MATRIX_SPLIT
+#define RGBLIGHT_LIMIT_VAL 120
+#endif
+#ifdef RGB_MATRIX_ENABLE
+// #define DRIVER_LED_TOTAL RGBLIGHT_LED_COUNT
 #define RGB_MATRIX_MAXIMUM_BRIGHTNESS 150 // limits maximum brightness of LEDs to 150 out of 255. Higher may cause the controller to crash.
 #define RGB_MATRIX_HUE_STEP 8
 #define RGB_MATRIX_SAT_STEP 8
@@ -33,7 +41,6 @@ for more options.
 #define RGB_MATRIX_SPD_STEP 10
 #define RGB_MATRIX_KEYPRESSES
 //#define RGB_MATRIX_FRAMEBUFFER_EFFECTS
-#define RGB_MATRIX_SPLIT {36,35}
 #define SPLIT_TRANSPORT_MIRROR
 #define ENABLE_RGB_MATRIX_SOLID_MULTISPLASH
 #define ENABLE_RGB_MATRIX_GRADIENT_UP_DOWN
@@ -42,10 +49,6 @@ for more options.
 #endif
 
 #ifdef RGBLIGHT_ENABLE
-#define RGBLIGHT_SPLIT
-#define RGBLED_NUM 72
-#define RGB_SPLIT {36,36}
-#define RGBLIGHT_LIMIT_VAL 120
 //   #define RGBLIGHT_SLEEP  /* If defined, the RGB lighting will be switched off when the host goes to sleep */
 // /*== all animations enable ==*/
 #define RGBLIGHT_ANIMATIONS
