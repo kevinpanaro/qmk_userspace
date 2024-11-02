@@ -22,17 +22,10 @@
 bool is_hid_connected = false; // is pc connected yet?
 
 
-#if CONSOLE_ENABLE
-    #if defined(OS_DETECTION_DEBUG_ENABLE)
-        #include "os_detection.h"
-    #endif
-    
-#endif
-
 enum sofle_layers {
     /* _M_XYZ = Mac Os, _W_XYZ = Win/Linux */
     _QWERTY,
-    // _MAC,
+    _MAC,
     _VALORANT,
     _APEX,
     _GAME,
@@ -105,13 +98,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  *            `----------------------------------'           '------''---------------------------'
  */
 
-// [_MAC] = LAYOUT(
-//   KC_GRV,   KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                     KC_6,    KC_7,    KC_8,    KC_9,    KC_0,  KC_MINS,
-//   KC_ESC,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                     KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,  KC_BSPC,
-//   KC_TAB,   KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                     KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN,  KC_QUOT,
-//   KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B, KC_MUTE,    KC_MPLY,KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH,  KC_RSFT,
-//                _______,KC_LCTL, KC_LOPT, KC_LCMD , KC_SPC,      KC_ENT,  _______, KC_RCMD, KC_ROPT, KC_RCTL
-// ),
+[_MAC] = LAYOUT(
+  KC_GRV,   KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                     KC_6,    KC_7,    KC_8,    KC_9,    KC_0,  KC_MINS,
+  KC_ESC,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                     KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,  KC_BSPC,
+  KC_TAB,   KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                     KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN,  KC_QUOT,
+  KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B, KC_MUTE,    KC_MPLY,KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH,  KC_RSFT,
+               _______,KC_LCTL, KC_LOPT, KC_LCMD , KC_SPC,      KC_ENT,  _______, KC_RCMD, KC_ROPT, KC_RCTL
+),
 /*
  * VALORANT
  * ,-----------------------------------------.                    ,-----------------------------------------.
@@ -238,7 +231,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
   [_ADJUST] = LAYOUT(
   EE_CLR , XXXXXXX,DF(_VALORANT) ,DF(_GAME) , DF(_APEX), XXXXXXX,            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-  QK_RBT  , XXXXXXX, DF(_QWERTY) , XXXXXXX , XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+  QK_RBT  , XXXXXXX, DF(_QWERTY) , DF(_MAC) , XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
   XXXXXXX , XXXXXXX,  XXXXXXX   , XXXXXXX , XXXXXXX, XXXXXXX,                     XXXXXXX, KC_VOLD, KC_MUTE, KC_VOLU, XXXXXXX, XXXXXXX,
   XXXXXXX , XXXXXXX,  XXXXXXX   , XXXXXXX , XXXXXXX, XXXXXXX, XXXXXXX,     XXXXXXX, XXXXXXX, KC_MPRV, KC_MEDIA_PLAY_PAUSE, KC_MNXT, XXXXXXX, XXXXXXX,
                    _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______
@@ -269,31 +262,6 @@ void render_rgb_status(void) {
 #endif
 
 
-#if OS_DETECTION_ENABLE
-bool process_detected_host_os_kb(os_variant_t detected_os) {
-    if (!process_detected_host_os_user(detected_os)) {
-        return false;
-    }
-    // oled_write(get_u8_str(detected_os, ' '), false);
-    switch (detected_os) {
-        case OS_MACOS:
-        case OS_IOS:
-            // set_single_persistent_default_layer(_MAC);
-            // tap_code16(QK_MAGIC_SWAP_LCTL_LGUI);
-            // register_code16(CG_LSWP);
-            break;
-        case OS_WINDOWS:
-        case OS_LINUX:
-        case OS_UNSURE:
-            // set_single_persistent_default_layer(_QWERTY);
-            // tap_code16(CG_LSWP);
-            // tap_code16(QK_MAGIC_SWAP_LCTL_LGUI);
-            break;
-    }
-    return true;
-}
-#endif  // OS_DETECTION_ENABLE
-
 static void print_status_narrow(void) {
     // Print current mode
 
@@ -310,9 +278,9 @@ static void print_status_narrow(void) {
         case _QWERTY:
             oled_write_P(PSTR("win "), false);
             break;
-        // case _MAC:
-        //     oled_write_P(PSTR("mac "), false);
-        //     break;
+        case _MAC:
+            oled_write_P(PSTR("mac "), false);
+            break;
         case _VALORANT:
             oled_write_P(PSTR("val "), false);
             break;
@@ -390,18 +358,6 @@ bool oled_task_user(void) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-        #ifdef OS_DETECTION_DEBUG_ENABLE
-            case STORE_SETUPS:
-                if (record->event.pressed) {
-                    store_setups_in_eeprom();
-                }
-                return false;
-            case PRINT_SETUPS:
-                if (record->event.pressed) {
-                    print_stored_setups();
-                }
-                return false;
-        #endif
         case KC_LOWER:
             if (record->event.pressed) {
                 layer_on(_LOWER);
@@ -535,90 +491,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 tap_code(KC_ENT);
             }
             break;
-        #if OS_DETECTION_ENABLE
-        case LALTCTL:
-            if (record->event.pressed) {
-                switch (detected_host_os()) {
-                    case OS_MACOS:
-                    case OS_IOS:
-                        register_code16(KC_LCTL);
-                        break;
-                    case OS_WINDOWS:
-                    case OS_LINUX:
-                    case OS_UNSURE:
-                        register_code16(KC_LALT);
-                        break;
-                }
-            } else {
-                switch (detected_host_os()) {
-                    case OS_MACOS:
-                    case OS_IOS:
-                        unregister_code16(KC_LCTL);
-                        break;
-                    case OS_WINDOWS:
-                    case OS_LINUX:
-                    case OS_UNSURE:
-                        unregister_code16(KC_LALT);
-                        break;
-                }
-            }
-            break;
-            
-        case LGUIOPT:
-            if (record->event.pressed) {
-                switch (detected_host_os()) {
-                    case OS_MACOS:
-                    case OS_IOS:
-                        register_code16(KC_LOPT);
-                        break;
-                    case OS_WINDOWS:
-                    case OS_LINUX:
-                    case OS_UNSURE:
-                        register_code16(KC_LGUI);
-                        break;
-                }
-            } else {
-                switch (detected_host_os()) {
-                    case OS_MACOS:
-                    case OS_IOS:
-                        unregister_code16(KC_LOPT);
-                        break;
-                    case OS_WINDOWS:
-                    case OS_LINUX:
-                    case OS_UNSURE:
-                        unregister_code16(KC_LGUI);
-                        break;
-                }
-            }
-            break;
-        case LCTLCMD:
-            if (record->event.pressed) {
-                switch (detected_host_os()) {
-                    case OS_MACOS:
-                    case OS_IOS:
-                        register_code16(KC_LCMD);
-                        break;
-                    case OS_WINDOWS:
-                    case OS_LINUX:
-                    case OS_UNSURE:
-                        register_code16(KC_LCTL);
-                        break;
-                }
-            } else {
-                switch (detected_host_os()) {
-                    case OS_MACOS:
-                    case OS_IOS:
-                        unregister_code16(KC_LCMD);
-                        break;
-                    case OS_WINDOWS:
-                    case OS_LINUX:
-                    case OS_UNSURE:
-                        unregister_code16(KC_LCTL);
-                        break;
-                }
-            }
-            break;
-        #endif
     }
     return true;
 }

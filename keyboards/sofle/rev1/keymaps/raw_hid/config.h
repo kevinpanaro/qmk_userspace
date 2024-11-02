@@ -94,4 +94,3 @@ for more options.
 
 // OS Detection Debugging
 // #define OS_DETECTION_DEBUG_ENABLE
-#define OS_DETECTION_DEBOUNCE 200
