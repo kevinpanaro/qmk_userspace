@@ -244,7 +244,6 @@ static void render_logo(void) {
     };
     oled_advance_page(true);
     oled_write_P(qmk_logo, false);
-    oled_set_brightness(oled_get_brightness());
 }
 
 #ifdef RGB_MATRIX_ENABLE        
