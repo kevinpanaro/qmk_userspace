@@ -14,25 +14,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "quantum.h"
 #include QMK_KEYBOARD_H
-#include <stdio.h>
-#ifdef RAW_ENABLE
-    #include "raw_hid.h"
-    #include <string.h>
-    #define RAW_EPSIZE 32
+#include "raw_hid.h"
+#include <string.h>
+#define RAW_EPSIZE 32
+bool is_hid_connected = false; // is pc connected yet?
+
+
+#if CONSOLE_ENABLE
+    #if defined(OS_DETECTION_DEBUG_ENABLE)
+        #include "os_detection.h"
+    #endif
     
-    bool is_hid_connected = false; // is pc connected yet?
-    uint8_t send_data[RAW_EPSIZE] = {0};  // buffer for raw_hid_send
-    uint8_t request;  // SET, GET
-    uint8_t action;  // OLED, RGB, LAYER
-    uint8_t sub_action;  // sub section or layer
-    uint8_t value;  // brightness value or line number
 #endif
 
 enum sofle_layers {
     /* _M_XYZ = Mac Os, _W_XYZ = Win/Linux */
     _QWERTY,
-    _MAC,
+    // _MAC,
     _VALORANT,
     _APEX,
     _GAME,
@@ -53,6 +53,13 @@ enum custom_keycodes {
     KC_SUPRG,
     KC_M20RR,
     KC_NO_TIME,
+    LALTCTL,
+    LGUIOPT,
+    LCTLCMD,
+#ifdef OS_DETECTION_DEBUG_ENABLE
+    STORE_SETUPS,
+    PRINT_SETUPS,
+#endif
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -78,10 +85,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_ESC,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                     KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,  KC_BSPC,
   KC_TAB,   KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                     KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN,  KC_QUOT,
   KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B, KC_MUTE,    KC_MPLY,KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH,  KC_RSFT,
-               KC_RAISE , KC_LALT, KC_LGUI, KC_LCTL , KC_SPC,    KC_ENT,  KC_LOWER, KC_RGUI, KC_RALT, KC_RCTL
+               KC_RAISE , LALTCTL, LGUIOPT, LCTLCMD , KC_SPC,    KC_ENT,  KC_LOWER, KC_RGUI, KC_RALT, KC_RCTL
+
+            //    KC_RAISE , KC_LALT, KC_LGUI, KC_LCTL , KC_SPC,    KC_ENT,  KC_LOWER, KC_RGUI, KC_RALT, KC_RCTL
 ),
 /*
- * MAC
+ * MAC          ALT -> CTL   GUI -> OPT  CTL -> CMD  AG_LSWP -> CG_LSWP
  * ,-----------------------------------------.                    ,-----------------------------------------.
  * |  `   |   1  |   2  |   3  |   4  |   5  |                    |   6  |   7  |   8  |   9  |   0  |  -   |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
@@ -91,18 +100,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|       |    |       |------+------+------+------+------+------|
  * |LShift|   Z  |   X  |   C  |   V  |   B  |-------|    |-------|   N  |   M  |   ,  |   .  |   /  |RShift|
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *            |RAISE | LCTL | LOPT | LCMD | /Space  /       \Enter \  |LOWER | RGUI | ROPT | RCTL |
+ *            |RAISE | LCTL | LOPT | LCMD | /Space  /       \Enter \  |LOWER | RCMD  | ROPT | RCTL |
  *            |      |      |      |      |/       /         \      \ |      |      |      |      |
  *            `----------------------------------'           '------''---------------------------'
  */
 
-[_MAC] = LAYOUT(
-  KC_GRV,   KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                     KC_6,    KC_7,    KC_8,    KC_9,    KC_0,  KC_MINS,
-  KC_ESC,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                     KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,  KC_BSPC,
-  KC_TAB,   KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                     KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN,  KC_QUOT,
-  KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B, KC_MUTE,    KC_MPLY,KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH,  KC_RSFT,
-               _______,KC_LCTL, KC_LOPT, KC_LCMD , KC_SPC,      KC_ENT,  _______, KC_RGUI, KC_ROPT, KC_RCTL
-),
+// [_MAC] = LAYOUT(
+//   KC_GRV,   KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                     KC_6,    KC_7,    KC_8,    KC_9,    KC_0,  KC_MINS,
+//   KC_ESC,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                     KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,  KC_BSPC,
+//   KC_TAB,   KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                     KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN,  KC_QUOT,
+//   KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B, KC_MUTE,    KC_MPLY,KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH,  KC_RSFT,
+//                _______,KC_LCTL, KC_LOPT, KC_LCMD , KC_SPC,      KC_ENT,  _______, KC_RCMD, KC_ROPT, KC_RCTL
+// ),
 /*
  * VALORANT
  * ,-----------------------------------------.                    ,-----------------------------------------.
@@ -189,8 +198,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   _______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,                           KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,
   KC_GRV , KC_1,    KC_2,    KC_3,    KC_4,    KC_5,                            KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_0,    KC_F12,
   _______, KC_EQL,  KC_MINS, KC_LPRN, KC_RPRN, KC_PLUS,                         KC_COLN, KC_LBRC, KC_RBRC, KC_UNDS, KC_PERC, KC_PIPE,
-  _______, KC_EXLM, KC_AT ,  KC_HASH, KC_LCBR, KC_RCBR, 
-  _______,       _______, KC_CIRC, KC_AMPR, KC_ASTR, KC_DLR,  KC_BSLS, _______,
+  _______, KC_EXLM, KC_AT ,  KC_HASH, KC_LCBR, KC_RCBR, _______,       _______, KC_CIRC, KC_AMPR, KC_ASTR, KC_DLR,  KC_BSLS, _______,
                   _______, _______, _______, _______, _______,           _______, _______, _______, _______, _______
 ),
 /* RAISE
@@ -229,19 +237,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  *            `----------------------------------'           '------''---------------------------'
  */
   [_ADJUST] = LAYOUT(
-  XXXXXXX , XXXXXXX,DF(_VALORANT) ,DF(_GAME) , DF(_APEX), XXXXXXX,            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-  QK_RBT  , XXXXXXX, DF(_QWERTY) , DF(_MAC) , XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+  EE_CLR , XXXXXXX,DF(_VALORANT) ,DF(_GAME) , DF(_APEX), XXXXXXX,            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+  QK_RBT  , XXXXXXX, DF(_QWERTY) , XXXXXXX , XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
   XXXXXXX , XXXXXXX,  XXXXXXX   , XXXXXXX , XXXXXXX, XXXXXXX,                     XXXXXXX, KC_VOLD, KC_MUTE, KC_VOLU, XXXXXXX, XXXXXXX,
   XXXXXXX , XXXXXXX,  XXXXXXX   , XXXXXXX , XXXXXXX, XXXXXXX, XXXXXXX,     XXXXXXX, XXXXXXX, KC_MPRV, KC_MEDIA_PLAY_PAUSE, KC_MNXT, XXXXXXX, XXXXXXX,
                    _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______
   ),
 };
 
-#if defined(RAW_ENABLE) || defined(OS_DETECTION_ENABLE)
-void activate_layer(uint8_t layer) {
-    set_single_persistent_default_layer(layer);
-}
-#endif
 
 #ifdef OLED_ENABLE
 static void render_logo(void) {
@@ -271,24 +274,22 @@ bool process_detected_host_os_kb(os_variant_t detected_os) {
     if (!process_detected_host_os_user(detected_os)) {
         return false;
     }
+    // oled_write(get_u8_str(detected_os, ' '), false);
     switch (detected_os) {
         case OS_MACOS:
-            oled_write_P(PSTR("macos"), false);
-            break;
         case OS_IOS:
-            oled_write_P(PSTR("ios  "), false);
+            // set_single_persistent_default_layer(_MAC);
+            // tap_code16(QK_MAGIC_SWAP_LCTL_LGUI);
+            // register_code16(CG_LSWP);
             break;
         case OS_WINDOWS:
-            oled_write_P(PSTR("win  "), false);
-            break;
         case OS_LINUX:
-            oled_write_P(PSTR("linux"), false);
-            break;
         case OS_UNSURE:
-            oled_write_P(PSTR("unsre"), false);
+            // set_single_persistent_default_layer(_QWERTY);
+            // tap_code16(CG_LSWP);
+            // tap_code16(QK_MAGIC_SWAP_LCTL_LGUI);
             break;
     }
-    
     return true;
 }
 #endif  // OS_DETECTION_ENABLE
@@ -309,9 +310,9 @@ static void print_status_narrow(void) {
         case _QWERTY:
             oled_write_P(PSTR("win "), false);
             break;
-        case _MAC:
-            oled_write_P(PSTR("mac "), false);
-            break;
+        // case _MAC:
+        //     oled_write_P(PSTR("mac "), false);
+        //     break;
         case _VALORANT:
             oled_write_P(PSTR("val "), false);
             break;
@@ -356,11 +357,12 @@ static void print_status_narrow(void) {
 
     // LINE 6
     oled_advance_page(true);
-    #if OS_DETECTION_ENABLE
-    process_detected_host_os_kb(detected_host_os() );
-    #endif  // OS_DETECTION_ENABLE
+    // #if OS_DETECTION_ENABLE
+    //     process_detected_host_os_user(detected_host_os() );
+    // #endif
     oled_write_P(PSTR("B-"), false);
     oled_write(get_u8_str(oled_get_brightness(), ' '), false);
+    oled_advance_page(true);
     // render_rgb_status();
     //oled_write_P(PSTR("\n\n"), false);
 }
@@ -388,6 +390,18 @@ bool oled_task_user(void) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
+        #ifdef OS_DETECTION_DEBUG_ENABLE
+            case STORE_SETUPS:
+                if (record->event.pressed) {
+                    store_setups_in_eeprom();
+                }
+                return false;
+            case PRINT_SETUPS:
+                if (record->event.pressed) {
+                    print_stored_setups();
+                }
+                return false;
+        #endif
         case KC_LOWER:
             if (record->event.pressed) {
                 layer_on(_LOWER);
@@ -521,6 +535,90 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 tap_code(KC_ENT);
             }
             break;
+        #if OS_DETECTION_ENABLE
+        case LALTCTL:
+            if (record->event.pressed) {
+                switch (detected_host_os()) {
+                    case OS_MACOS:
+                    case OS_IOS:
+                        register_code16(KC_LCTL);
+                        break;
+                    case OS_WINDOWS:
+                    case OS_LINUX:
+                    case OS_UNSURE:
+                        register_code16(KC_LALT);
+                        break;
+                }
+            } else {
+                switch (detected_host_os()) {
+                    case OS_MACOS:
+                    case OS_IOS:
+                        unregister_code16(KC_LCTL);
+                        break;
+                    case OS_WINDOWS:
+                    case OS_LINUX:
+                    case OS_UNSURE:
+                        unregister_code16(KC_LALT);
+                        break;
+                }
+            }
+            break;
+            
+        case LGUIOPT:
+            if (record->event.pressed) {
+                switch (detected_host_os()) {
+                    case OS_MACOS:
+                    case OS_IOS:
+                        register_code16(KC_LOPT);
+                        break;
+                    case OS_WINDOWS:
+                    case OS_LINUX:
+                    case OS_UNSURE:
+                        register_code16(KC_LGUI);
+                        break;
+                }
+            } else {
+                switch (detected_host_os()) {
+                    case OS_MACOS:
+                    case OS_IOS:
+                        unregister_code16(KC_LOPT);
+                        break;
+                    case OS_WINDOWS:
+                    case OS_LINUX:
+                    case OS_UNSURE:
+                        unregister_code16(KC_LGUI);
+                        break;
+                }
+            }
+            break;
+        case LCTLCMD:
+            if (record->event.pressed) {
+                switch (detected_host_os()) {
+                    case OS_MACOS:
+                    case OS_IOS:
+                        register_code16(KC_LCMD);
+                        break;
+                    case OS_WINDOWS:
+                    case OS_LINUX:
+                    case OS_UNSURE:
+                        register_code16(KC_LCTL);
+                        break;
+                }
+            } else {
+                switch (detected_host_os()) {
+                    case OS_MACOS:
+                    case OS_IOS:
+                        unregister_code16(KC_LCMD);
+                        break;
+                    case OS_WINDOWS:
+                    case OS_LINUX:
+                    case OS_UNSURE:
+                        unregister_code16(KC_LCTL);
+                        break;
+                }
+            }
+            break;
+        #endif
     }
     return true;
 }
@@ -580,11 +678,13 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
                 // tap_code(KC_MS_WH_DOWN);
             }
         } else if (index == 1) { /* Second encoder */
+            register_code(KC_LCTL);
             if (clockwise) {
-                tap_code(KC_VOLU);
+                tap_code(KC_EQL);
             } else {
-                tap_code(KC_VOLD);
+                tap_code(KC_MINS);
             }
+            unregister_code(KC_LCTL);
         }
     }
     return false;  // don't allow keyboard/core level encoder code to run.
@@ -638,9 +738,9 @@ enum oled_args {
     READ=6,
 };
 
-void clear_send_buffer(void) {
-    memset(send_data, 0, sizeof(send_data));
-}
+// void clear_send_buffer(void) {
+//     memset(send_data, 0, sizeof(send_data));
+// }
 
 // void oled_set_action(uint8_t arg, uint8_t value) {
 //     switch ( arg ) {
@@ -661,31 +761,31 @@ void clear_send_buffer(void) {
 //     }
 // }
 
-void oled_get_action(uint8_t *data) {
-    sub_action = data[2];
-    switch ( sub_action ) {
-        case BRIGHTNESS:
-            send_data[0] = oled_get_brightness();
-            break;
-        case STATE:
-            if ( is_oled_on() ) {
-                send_data[0] = 1;
-            } else {
-                send_data[0] = 0;
-            }
-            break;
-        case LINES:
-            send_data[0] = oled_max_lines();
-            break;
-        case CHARS:
-            send_data[0] = oled_max_chars();
-            break;
-        default:
-            memset(send_data, 255, sizeof(send_data));
-            break;
-    }
-    raw_hid_send(send_data, sizeof(send_data));
-}
+// void oled_get_action(uint8_t *data) {
+//     sub_action = data[2];
+//     switch ( sub_action ) {
+//         case BRIGHTNESS:
+//             send_data[0] = oled_get_brightness();
+//             break;
+//         case STATE:
+//             if ( is_oled_on() ) {
+//                 send_data[0] = 1;
+//             } else {
+//                 send_data[0] = 0;
+//             }
+//             break;
+//         case LINES:
+//             send_data[0] = oled_max_lines();
+//             break;
+//         case CHARS:
+//             send_data[0] = oled_max_chars();
+//             break;
+//         default:
+//             memset(send_data, 255, sizeof(send_data));
+//             break;
+//     }
+//     raw_hid_send(send_data, sizeof(send_data));
+// }
 
 // void set_action(uint8_t action, uint8_t arg, uint8_t value) {
 //     switch ( action ) {
@@ -703,70 +803,70 @@ void oled_get_action(uint8_t *data) {
 //     }
 // }
 
-void get_action(uint8_t *data) {
-    clear_send_buffer();
-    action = data[1];
+// void get_action(uint8_t *data) {
+//     clear_send_buffer();
+//     action = data[1];
 
-    switch ( action ) {
-        case OLED_ACTION:
-            oled_get_action(data);
-            break;
-        case RGB_ACTION:
-            break;
-        case LAYER_ACTION:
-            send_data[0] = get_highest_layer(default_layer_state) ;
-            raw_hid_send(send_data, sizeof(send_data));
-            break;
-        case EXIT_ACTION:
-            is_hid_connected = false;
-            break;
-        default:
-            break;
-    }
-}
+//     switch ( action ) {
+//         case OLED_ACTION:
+//             oled_get_action(data);
+//             break;
+//         case RGB_ACTION:
+//             break;
+//         case LAYER_ACTION:
+//             send_data[0] = get_highest_layer(default_layer_state) ;
+//             raw_hid_send(send_data, sizeof(send_data));
+//             break;
+//         case EXIT_ACTION:
+//             is_hid_connected = false;
+//             break;
+//         default:
+//             break;
+//     }
+// }
 
-void oled_set_action(uint8_t *data) {
-    sub_action = data[2];
-    value = data[3];
-    uint8_t string[5];  // buffer to write to oled
-    switch ( sub_action ) {
-        case BRIGHTNESS:
-            oled_set_brightness(value);
-            break;
-        case STATE:
-            if ( value ) {
-                oled_on();
-            } else {
-                oled_off();
-            }
-            break;
-        case WRITE:
-            memcpy(string, &data[4], sizeof(string));
-            oled_set_cursor(0, value);
-            oled_write((char*)string, false);
-            break;
-        default:
-            break;
-    }
-}
+// void oled_set_action(uint8_t *data) {
+//     sub_action = data[2];
+//     value = data[3];
+//     uint8_t string[5];  // buffer to write to oled
+//     switch ( sub_action ) {
+//         case BRIGHTNESS:
+//             oled_set_brightness(value);
+//             break;
+//         case STATE:
+//             if ( value ) {
+//                 oled_on();
+//             } else {
+//                 oled_off();
+//             }
+//             break;
+//         case WRITE:
+//             memcpy(string, &data[4], sizeof(string));
+//             oled_set_cursor(0, value);
+//             oled_write((char*)string, false);
+//             break;
+//         default:
+//             break;
+//     }
+// }
 
-void set_action(uint8_t *data) {
-    action = data[1];
-    sub_action = data[2];
-    switch ( action ) {
-        case OLED_ACTION:
-            oled_set_action(data);
-            break;
-        case RGB_ACTION:
-            break;
-        case LAYER_ACTION:
-            activate_layer(sub_action);
-            break;
-        case EXIT_ACTION:
-            is_hid_connected = false;
-            break;
-    }
-}
+// void set_action(uint8_t *data) {
+//     action = data[1];
+//     sub_action = data[2];
+//     switch ( action ) {
+//         case OLED_ACTION:
+//             oled_set_action(data);
+//             break;
+//         case RGB_ACTION:
+//             break;
+//         case LAYER_ACTION:
+//             activate_layer(sub_action);
+//             break;
+//         case EXIT_ACTION:
+//             is_hid_connected = false;
+//             break;
+//     }
+// }
 
 // void raw_hid_receive(uint8_t *data, uint8_t length) {
 //     is_hid_connected = true;

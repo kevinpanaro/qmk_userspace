@@ -91,3 +91,7 @@ for more options.
 #define OLED_FONT_H "font.c"
 #define ENCODER_RESOLUTIONS { 4 }
 #define ENCODER_RESOLUTIONS_RIGHT { 4 }
+
+// OS Detection Debugging
+// #define OS_DETECTION_DEBUG_ENABLE
+#define OS_DETECTION_DEBOUNCE 200
