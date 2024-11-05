@@ -365,6 +365,16 @@ bool oled_task_user(void) {
 
 #endif // OLED_ENABLE
 
+void begin_all_chat(void) {
+    register_code(KC_LSFT);
+    tap_code(KC_ENT);
+    unregister_code(KC_LSFT);
+}
+
+void end_all_chat(void) {
+    tap_code(KC_ENT);
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case KC_LOWER:
@@ -485,19 +495,32 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         // Originally I wanted this to be built in, but instead for space and speed
         //  I just added it to WinCompose Sequences.
             if (record->event.pressed) {
+                begin_all_chat();
                 tap_code(KC_RALT);
                 tap_code(KC_MINUS);
                 tap_code(KC_2);
                 tap_code(KC_0);
+                end_all_chat();
             }    
-            break;  
+            break;
         case KC_NO_TIME:
             if (record->event.pressed) {
-                register_code(KC_LSFT);
-                tap_code(KC_ENT);
-                unregister_code(KC_LSFT);
-                SEND_STRING("NO TIME");
-                tap_code(KC_ENT);
+                begin_all_chat();
+                send_char(0x4E);
+                send_char(0x4F);
+                send_char(0x20);
+                send_char(0x54);
+                send_char(0x49);
+                send_char(0x4D);
+                send_char(0x45);
+                end_all_chat();
+            }
+            break;
+        case VL_WHAT:
+            if (record->event.pressed) {
+                begin_all_chat();
+                send_char(0x3F);
+                end_all_chat();
             }
             break;
     }
