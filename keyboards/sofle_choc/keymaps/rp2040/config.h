@@ -27,3 +27,9 @@
 #define RGB_MATRIX_SLEEP     // turn off effects when suspended
 #define SPLIT_TRANSPORT_MIRROR             // If LED_MATRIX_KEYPRESSES or LED_MATRIX_KEYRELEASES is enabled, you also will want to enable SPLIT_TRANSPORT_MIRROR
 #define RGB_MATRIX_MAXIMUM_BRIGHTNESS 100  // limits maximum brightness of LEDs (max 255). Higher may cause the controller to crash.
+
+
+// OLED Basic Configuration : https://docs.qmk.fm/features/oled_driver#basic-configuration
+#define OLED_BRIGHTNESS 0x80  // default brightness, 0 to 255
+#define OLED_FADE_OUT  // enabled fade ou animation
+#define OLED_TIMEOUT 10000 // ms

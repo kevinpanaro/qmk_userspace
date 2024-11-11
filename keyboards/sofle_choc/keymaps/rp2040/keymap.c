@@ -13,7 +13,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "action_layer.h"
+#include "oled_driver.h"
 #include QMK_KEYBOARD_H
+
+enum layers {
+    /* _M_XYZ = Mac Os, _W_XYZ = Win/Linux */
+    _MACOS,
+    _LOWER,
+    _RAISE,
+    _ADJUST,
+};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 /*
@@ -32,7 +42,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  *                                           ╰───────╯    ╰───────╯
 */
 
-LAYOUT(
+[_MACOS] = LAYOUT(
     KC_GRV,   KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                       KC_6,     KC_7,     KC_8,    KC_9,    KC_0,    KC_GRV,
     KC_ESC,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                       KC_Y,     KC_U,     KC_I,    KC_O,    KC_P,    KC_BSPC,
     KC_TAB,   KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                       KC_H,     KC_J,     KC_K,    KC_L,    KC_SCLN, KC_QUOT,
@@ -45,4 +55,62 @@ LAYOUT(
 const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     { ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_MPRV, KC_MNXT) },
 };
+#endif
+
+
+#if defined(OS_DETECTION_ENABLE)
+
+bool process_detected_host_os_user(os_variant_t detected_os) {
+    switch (detected_os) {
+        case OS_MACOS:
+        case OS_IOS:
+            break;
+        case OS_WINDOWS:
+            break;
+        case OS_LINUX:
+            break;
+        case OS_UNSURE:
+            break;
+    }
+    return true;
+}
+#endif
+
+#if defined(OLED_ENABLE)
+
+// Rotate the slave OLED
+oled_rotation_t oled_init_user(oled_rotation_t rotation) {
+    if (!is_keyboard_master()) {
+        return OLED_ROTATION_180;  // flips the display 180 degrees if offhand
+    }
+
+    return rotation;
+}
+
+void oled_current_layer(void) {
+    // Current Layer
+    switch (get_highest_layer(layer_state)) {
+        case _MACOS:
+            oled_write_P(PSTR("MacOS"), false);
+            break;
+        default:
+            oled_write_ln_P(PSTR("Undef"), false);
+    }
+}
+
+void oled_master(void) {
+    oled_current_layer();
+}
+
+void oled_slave(void) {
+}
+
+bool oled_task_user(void) {
+    if (is_keyboard_master()) {
+        oled_master();  // Renders master
+    } else {
+        oled_slave();  // Renders slave
+    }
+    return false;
+}
 #endif
