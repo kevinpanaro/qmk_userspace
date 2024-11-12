@@ -33,3 +33,7 @@
 #define OLED_BRIGHTNESS 0x80  // default brightness, 0 to 255
 #define OLED_FADE_OUT  // enabled fade ou animation
 #define OLED_TIMEOUT 10000 // ms
+
+#ifdef CONVERT_TO
+
+#endif
