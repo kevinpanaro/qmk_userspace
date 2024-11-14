@@ -37,3 +37,10 @@
 #ifdef CONVERT_TO
 
 #endif
+
+// https://docs.qmk.fm/quantum_keycodes#qmk-keycodes
+// QK_MAKE requires ENABLE_COMPILE_KEYCODE
+#define ENABLE_COMPILE_KEYCODE
+
+// RGB LED Matrix : https://docs.qmk.fm/features/rgb_matrix#indicator-examples
+#define SPLIT_LAYER_STATE_ENABLE
