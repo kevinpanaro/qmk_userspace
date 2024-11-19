@@ -44,3 +44,7 @@
 
 // RGB LED Matrix : https://docs.qmk.fm/features/rgb_matrix#indicator-examples
 #define SPLIT_LAYER_STATE_ENABLE
+
+// Encoders : https://docs.qmk.fm/features/encoders
+// Flipped
+#define ENCODER_DIRECTION_FLIP
