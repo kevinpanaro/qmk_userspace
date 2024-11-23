@@ -31,3 +31,7 @@ RGB_MATRIX_CUSTOM_USER = yes
 # Better encoders to support modifiers
 ENCODER_MAP_ENABLE = no
 ENCODER_ENABLE = yes
+
+# Globe Key : https://skip.house/blog/qmk-globe-key
+# https://gist.github.com/lordpixel23/87498dc42e328eabdff6dd258a667efd
+KEYBOARD_SHARED_EP = no

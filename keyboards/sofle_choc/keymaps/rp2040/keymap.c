@@ -18,6 +18,7 @@
 #include "action_util.h"
 #include "keycodes.h"
 #include "oled_driver.h"
+#include "quantum_keycodes.h"
 #include QMK_KEYBOARD_H
 
 enum layer_names {
@@ -60,7 +61,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_ESC,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                       KC_Y,     KC_U,     KC_I,    KC_O,    KC_P,    KC_BSPC,
     KC_TAB,   KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                       KC_H,     KC_J,     KC_K,    KC_L,    KC_SCLN, KC_QUOT,
     KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B,    KC_MUTE,   KC_F20,KC_N,     KC_M,     KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
-                      TL_UPPR, KC_LCTL, KC_LOPT, KC_LCMD, KC_SPC,            KC_ENT, TL_LOWR, KC_RCMD,  KC_ROPT,  KC_RCTL
+                      TL_UPPR, KC_LCTL, KC_LOPT, KC_LCMD, KC_SPC,            KC_ENT, TL_LOWR, KC_RCMD,  KC_ROPT,  PB_1
 ),
 /*
  * TRI_LAYER_LOWER_LAYER
@@ -83,7 +84,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_GRV , KC_1,    KC_2,    KC_3,    KC_4,    KC_5,                            KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, XXXXXXX,    KC_F12,
     _______, KC_EQL,  KC_MINS, KC_LPRN, KC_RPRN, KC_PLUS,                         KC_COLN, KC_LBRC, KC_RBRC, KC_UNDS, KC_PERC, KC_PIPE,
     _______, KC_EXLM, KC_AT ,  KC_HASH, KC_LCBR, KC_RCBR, _______,       _______, KC_CIRC, KC_AMPR, KC_ASTR, KC_DLR,  KC_BSLS, _______,
-                      _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, XXXXXXX
+                      _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, _______
 ),
 /*
  * TRI_LAYER_UPPER_LAYER
@@ -106,7 +107,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                     KC_LEFT, KC_UP  , KC_DOWN, KC_RIGHT,XXXXXXX, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-                      _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, XXXXXXX
+                      _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, _______
 ),
 /*
  * TRI_LAYER_ADJUST_LAYER
@@ -129,7 +130,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX , XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, RGB_RMOD, RGB_TOG, RGB_MOD,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX , XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-                      _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, XXXXXXX
+                      _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, _______
 ),
 #endif // defined(TRI_LAYER_ENABLE)
 
@@ -154,12 +155,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX , XXXXXXX, XXXXXXX,                     KC_LEFT, KC_DOWN, KC_UP  , KC_RGHT, XXXXXXX, XXXXXXX,
     XXXXXXX, KC_EQL,  KC_MINS, KC_LPRN , KC_RPRN, KC_PLUS,                     KC_COLN, KC_LBRC, KC_RBRC, KC_UNDS, KC_PERC, KC_PIPE,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX , XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-                              _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, XXXXXXX
+                              _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, _______
 ),
 #endif  // defined(KEY_OVERRIDE_ENABLE)
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+    }
     return true;
 };
 
@@ -197,51 +200,48 @@ combo_t key_combos[] = {
 };
 #endif // defined(COMBO_ENABLE)
 
-#if defined(ENCODER_MAP_ENABLE)
-const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
-    [MACOS] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_F17, KC_F11) },
-#if defined(TRI_LAYER_ENABLE)
-    [LOWER] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_MPRV, KC_MNXT) },
-    [UPPER] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_MPRV, KC_MNXT) },
-    [ADJUST] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_MPRV, KC_MNXT) },
-#endif  // defined(TRI_LAYER_ENABLE)
-
-#if defined(KEY_OVERRIDE_ENABLE) || defined(COMBO_ENABLE)
-    [COMMAND] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_MPRV, KC_MNXT) },
-#endif  // defined(KEY_OVERRIDE_ENABLE) || defined(COMBO_ENABLE)
-};
-#endif  // defined(ENCODER_MAP_ENABLE)
-
 #if defined(ENCODER_ENABLE)
 uint8_t mod_state;
 bool encoder_update_user(uint8_t index, bool clockwise) {
     mod_state = get_mods();
     clear_mods();
     if (index == 0) { /* First encoder */
-        if (clockwise) {
-            tap_code(KC_VOLU);
+        if (mod_state & MOD_MASK_GUI) { /* Command */
+            // Change Brightness of Main Monitor
+            if (clockwise) {
+                tap_code(KC_BRMU);
+            } else {
+                tap_code(KC_BRMD);
+            }
+        } else if (mod_state & MOD_MASK_CTRL) { /* Control */
+            // Change Brightness of Extended Monitor
+            register_code(KC_LCTL);
+            if (clockwise) {
+                tap_code(KC_BRMU);
+            } else {
+                tap_code(KC_BRMD);
+            }
+            unregister_code(KC_LCTL);
         } else {
-            tap_code(KC_VOLD);
+            // Change Volume
+            if (clockwise) {
+                tap_code(KC_VOLU);
+            } else {
+                tap_code(KC_VOLD);
+            }
         }
     } else if (index == 1) { /* Second encoder */
         if (mod_state & MOD_MASK_GUI) { /* Command */
-
             if (clockwise) {
                 tap_code(KC_F16);  /* VSCode Debug : Continue */
             } else {
-                // unregister_mods(KC_LGUI);
-                // register_code(KC_LSFT);
                 tap_code(KC_F11);  /* VSCode Debug : Step Out */
-                // unregister_code(KC_LSFT);
-                // register_mods(KC_LGUI);
             }
         } else if (mod_state & MOD_MASK_ALT) { /* Option */
             register_code(KC_LOPT);
             if (clockwise) {
                 tap_code(KC_RIGHT);  /* Next Word*/
-                // unregister_code(KC_LOPT);
             } else {
-                // clear_mods();
                 tap_code(KC_LEFT);  /* Previous Word */
             }
             unregister_code(KC_LOPT);
