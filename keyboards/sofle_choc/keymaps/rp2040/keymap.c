@@ -349,3 +349,16 @@ bool shutdown_user(bool jump_to_bootloader) {
     // false to not process kb level
     return false;
 }
+
+
+#if defined(RAW_ENABLE)
+void raw_hid_receive(uint8_t *data, uint8_t length) {
+    uint8_t response[length];
+    memset(response, 0, length);
+    response[0] = 'B';
+
+    if(data[0] == 'A') {
+        raw_hid_send(response, length);
+    }
+}
+#endif // defined(RAW_ENABLE)
