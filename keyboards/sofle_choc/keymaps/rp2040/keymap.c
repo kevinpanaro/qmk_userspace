@@ -19,6 +19,13 @@
 #include "keycodes.h"
 #include "oled_driver.h"
 #include "quantum_keycodes.h"
+
+#if defined(RAW_ENABLE)
+#include "raw_hid.h"
+#include <string.h>
+#define RAW_EPSIZE 32
+bool is_hid_connected = false;
+#endif  // defined(RAW_ENABLE)
 #include QMK_KEYBOARD_H
 
 enum layer_names {
@@ -352,13 +359,76 @@ bool shutdown_user(bool jump_to_bootloader) {
 
 
 #if defined(RAW_ENABLE)
-void raw_hid_receive(uint8_t *data, uint8_t length) {
-    uint8_t response[length];
-    memset(response, 0, length);
-    response[0] = 'B';
 
-    if(data[0] == 'A') {
-        raw_hid_send(response, length);
+enum sub_auto_layers {
+    id_layer_state_set = 1,
+    id_layer_clear = 2,
+    id_layer_move = 3,
+    id_layer_on = 4,
+    id_layer_off = 5,
+    id_get_highest_layer = 6,
+    id_ping = 7,
+};
+
+enum report_ids {
+    auto_layers = 1,
+};
+
+void raw_hid_receive(uint8_t *data, uint8_t length) {
+    uint8_t *report_id   = &(data[0]);
+    uint8_t *sub_id = &(data[1]);
+    uint8_t *command_data = &(data[2]);
+
+    switch (*report_id) {
+        // auto_layers
+        case auto_layers: {
+            switch (*sub_id) {
+                // layer_state_set
+                case id_layer_state_set: {
+                    // uint8_t layer_mask
+                    layer_state_set(command_data[0]);
+                    break;
+                }
+                // layer_clear
+                case id_layer_clear: {
+                    layer_clear();
+                    break;
+                }
+                // layer_move
+                case id_layer_move: {
+                    // uint8_t layer
+                    layer_move(command_data[0]);
+                    break;
+                }
+                // layer_on
+                case id_layer_on: {
+                    // uint8_t layer
+                    layer_on(command_data[0]);
+                    break;
+                }
+                // layer_off
+                case id_layer_off: {
+                    // uint8_t layer
+                    layer_off(command_data[0]);
+                    break;
+                }
+                // get_highest_layer
+                case id_get_highest_layer: {
+                    command_data[0] = get_highest_layer(layer_state);
+                    break;
+                }
+                // ping
+                case id_ping: {
+                    // uint8_t ping
+                    break;
+                }
+            }
+            break;
+        }
+        default: {
+            break;
+        }
     }
+    raw_hid_send(data, length);
 }
 #endif // defined(RAW_ENABLE)
