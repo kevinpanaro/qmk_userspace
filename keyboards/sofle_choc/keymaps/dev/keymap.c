@@ -22,7 +22,7 @@
 
 #if defined(RAW_ENABLE)
 #include "raw_hid.h"
-#include <string.h>
+// #include <string.h>
 #define RAW_EPSIZE 32
 bool is_hid_connected = false;
 #endif  // defined(RAW_ENABLE)
