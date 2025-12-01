@@ -87,11 +87,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 */
 #if defined(TRI_LAYER_ENABLE)
 [LOWER] = LAYOUT(
-    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+    XXXXXXX, KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5  ,                     KC_F6 , KC_F7  , KC_F8  , KC_F9  , KC_F10 , XXXXXXX,
     KC_GRV , KC_1,    KC_2,    KC_3,    KC_4,    KC_5,                            KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, XXXXXXX,    KC_F12,
     _______, KC_EQL,  KC_MINS, KC_LPRN, KC_RPRN, KC_PLUS,                         KC_COLN, KC_LBRC, KC_RBRC, KC_UNDS, KC_PERC, KC_PIPE,
     _______, KC_EXLM, KC_AT ,  KC_HASH, KC_LCBR, KC_RCBR, _______,       _______, KC_CIRC, KC_AMPR, KC_ASTR, KC_DLR,  KC_BSLS, _______,
-                      _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, _______
+                      _______, _______, _______, _______, _______,   _______, _______,  _______,  _______, _______
 ),
 /*
  * TRI_LAYER_UPPER_LAYER
@@ -112,7 +112,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [UPPER] = LAYOUT(
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                     KC_LEFT, KC_UP  , KC_DOWN, KC_RIGHT,XXXXXXX, XXXXXXX,
+    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_CAPS,                     KC_LEFT, KC_UP  , KC_DOWN, KC_RIGHT,XXXXXXX, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
                       _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, _______
 ),
@@ -173,6 +173,37 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 };
 
+#if defined(OLED_ENABLE)
+
+enum brightness {
+    DOWN,
+    UP,
+};
+
+void set_brightness(uint8_t delta) {
+    //
+    uint8_t current_brightness = oled_get_brightness();
+    uint8_t level = 0;
+    switch ( delta ) {
+        case UP:
+            level = current_brightness + 15;
+            if ( current_brightness > level ) {
+                level = 255;
+            }
+            break;
+        case DOWN:
+            level = current_brightness - 15;
+            if ( current_brightness < level ) {
+                level = 0;
+            }
+            break;
+        default:
+            break;
+    }
+    oled_set_brightness(level);
+}
+#endif
+
 #if defined(KEY_OVERRIDE_ENABLE)
 // This doesn't work because left and right command are the same key
 bool momentary_layer(bool key_down, void *layer) {
@@ -213,51 +244,90 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
     mod_state = get_mods();
     clear_mods();
     if (index == 0) { /* First encoder */
-        if (mod_state & MOD_MASK_GUI) { /* Command */
-            // Change Brightness of Main Monitor
-            if (clockwise) {
-                tap_code(KC_BRMU);
-            } else {
-                tap_code(KC_BRMD);
-            }
-        } else if (mod_state & MOD_MASK_CTRL) { /* Control */
-            // Change Brightness of Extended Monitor
-            register_code(KC_LCTL);
-            if (clockwise) {
-                tap_code(KC_BRMU);
-            } else {
-                tap_code(KC_BRMD);
-            }
-            unregister_code(KC_LCTL);
-        } else {
-            // Change Volume
-            if (clockwise) {
-                tap_code(KC_VOLU);
-            } else {
-                tap_code(KC_VOLD);
-            }
+        switch (get_highest_layer(layer_state)) {
+            case MACOS:
+                if (mod_state & MOD_MASK_GUI) { /* Command */
+                    // Change Brightness of Main Monitor
+                    if (clockwise) {
+                        tap_code(KC_BRMU);
+                    } else {
+                        tap_code(KC_BRMD);
+                    }
+                } else if (mod_state & MOD_MASK_CTRL) { /* Control */
+                    // // Change Brightness of Extended Monitor
+                    // register_code(KC_LCTL);
+                    // if (clockwise) {
+                    //     tap_code(KC_BRMU);
+                    // } else {
+                    //     tap_code(KC_BRMD);
+                    // }
+                    // unregister_code(KC_LCTL);
+                } else {
+                    // Change Volume
+                    if (clockwise) {
+                        tap_code(KC_VOLU);
+                    } else {
+                        tap_code(KC_VOLD);
+                    }
+                }
+                break;
+            case LOWER:
+
+                #if defined(OLED_ENABLE)
+                    // Change OLED Brightness
+                    if (clockwise) {
+                        set_brightness(UP);
+                    } else {
+                        set_brightness(DOWN);
+                    }
+                    break;
+                #endif
+            case UPPER:
+            case ADJUST:
+            case COMMAND:
+            default:
+                break;
         }
     } else if (index == 1) { /* Second encoder */
-        if (mod_state & MOD_MASK_GUI) { /* Command */
-            if (clockwise) {
-                tap_code(KC_F16);  /* VSCode Debug : Continue */
-            } else {
-                tap_code(KC_F11);  /* VSCode Debug : Step Out */
-            }
-        } else if (mod_state & MOD_MASK_ALT) { /* Option */
-            register_code(KC_LOPT);
-            if (clockwise) {
-                tap_code(KC_RIGHT);  /* Next Word*/
-            } else {
-                tap_code(KC_LEFT);  /* Previous Word */
-            }
-            unregister_code(KC_LOPT);
-        } else {
-            if (clockwise) {
-                tap_code(KC_F17);  /* VSCode Debug : Step Over */
-            } else {
-                tap_code(KC_F11);  /* VSCode Debug : Step Into */
-            }
+        switch (get_highest_layer(layer_state)) {
+            case MACOS:
+                if (mod_state & MOD_MASK_GUI) { /* Command */
+                    if (clockwise) {
+                        tap_code(KC_F16);  /* VSCode Debug : Continue */
+                    } else {
+                        tap_code(KC_F11);  /* VSCode Debug : Step Out */
+                    }
+                } else if (mod_state & MOD_MASK_ALT) { /* Option */
+                    register_code(KC_LOPT);
+                    if (clockwise) {
+                        tap_code(KC_RIGHT);  /* Next Word*/
+                    } else {
+                        tap_code(KC_LEFT);  /* Previous Word */
+                    }
+                    unregister_code(KC_LOPT);
+                } else {
+                    if (clockwise) {
+                        tap_code(KC_F17);  /* VSCode Debug : Step Over */
+                    } else {
+                        tap_code(KC_F11);  /* VSCode Debug : Step Into */
+                    }
+                }
+            case LOWER:
+                break;
+            case UPPER:
+                #if defined(OLED_ENABLE)
+                    // Change OLED Brightness
+                    if (clockwise) {
+                        set_brightness(UP);
+                    } else {
+                        set_brightness(DOWN);
+                    }
+                    break;
+                #endif
+            case ADJUST:
+            case COMMAND:
+            default:
+                break;
         }
     }
     set_mods(mod_state);
@@ -299,22 +369,22 @@ void oled_current_layer(void) {
     // Current Layer
     switch (get_highest_layer(layer_state)) {
         case MACOS:
-            oled_write_P(PSTR("MacOS"), false);
+            oled_write_P(PSTR("macos"), false);
             break;
         case LOWER:
-            oled_write_P(PSTR("Lower"), false);
+            oled_write_P(PSTR("lower"), false);
             break;
         case UPPER:
-            oled_write_P(PSTR("Raise"), false);
+            oled_write_P(PSTR("raise"), false);
             break;
         case ADJUST:
-            oled_write_P(PSTR("Adjust"), false);
+            oled_write_P(PSTR("adjst"), false);
             break;
         case COMMAND:
             oled_write_P(PSTR("cmd"), false);
             break;
         default:
-            oled_write_ln_P(PSTR("Undef"), false);
+            oled_write_ln_P(PSTR("undef"), false);
     }
 }
 
@@ -323,6 +393,11 @@ void oled_master(void) {
 }
 
 void oled_slave(void) {
+    // Host Keyboard LED Status
+    led_t led_state = host_keyboard_led_state();
+    oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
+    oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
+    oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
 }
 
 bool oled_task_user(void) {
@@ -375,7 +450,7 @@ enum report_ids {
 };
 
 void raw_hid_receive(uint8_t *data, uint8_t length) {
-    uint8_t *report_id   = &(data[0]);
+    uint8_t *report_id = &(data[0]);
     uint8_t *sub_id = &(data[1]);
     uint8_t *command_data = &(data[2]);
 
@@ -426,6 +501,8 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
             break;
         }
         default: {
+            command_data[0] = SPLIT_KEYBOARD;
+            command_data[1] = OLED_ENABLE;
             break;
         }
     }
