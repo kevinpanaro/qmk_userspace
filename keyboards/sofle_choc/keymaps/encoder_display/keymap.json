@@ -1,0 +1,4 @@
+{
+    "converter": "rp2040_ce",
+    "modules": ["getreuer/socd_cleaner"]
+}

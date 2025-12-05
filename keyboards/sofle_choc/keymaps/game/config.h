@@ -1,0 +1,57 @@
+/* Copyright 2023 Brian Low
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#pragma once
+
+// Enabling this option changes the startup behavior to listen for an
+// active USB communication to delegate which part is master and which
+// is slave. With this option enabled and theres’s USB communication,
+// then that half assumes it is the master, otherwise it assumes it
+// is the slave.
+//
+// I've found this helps with some ProMicros where the slave does not boot
+#define SPLIT_USB_DETECT
+
+#define RGB_MATRIX_SLEEP     // turn off effects when suspended
+#define SPLIT_TRANSPORT_MIRROR             // If LED_MATRIX_KEYPRESSES or LED_MATRIX_KEYRELEASES is enabled, you also will want to enable SPLIT_TRANSPORT_MIRROR
+#define RGB_MATRIX_MAXIMUM_BRIGHTNESS 100  // limits maximum brightness of LEDs (max 255). Higher may cause the controller to crash.
+
+
+// https://docs.qmk.fm/quantum_keycodes#qmk-keycodes
+// QK_MAKE requires ENABLE_COMPILE_KEYCODE
+#define ENABLE_COMPILE_KEYCODE
+
+// RGB LED Matrix : https://docs.qmk.fm/features/rgb_matrix#indicator-examples
+#define SPLIT_LAYER_STATE_ENABLE
+#define SPLIT_LED_STATE_ENABLE
+#define SPLIT_OLED_ENABLE
+#define SPLIT_ACTIVITY_ENABLE  // Sync activity timestamps for encoder display timeouts
+
+// Custom data sync for encoder display and brightness
+#define SPLIT_TRANSACTION_IDS_USER ENCODER_SYNC
+
+// RPC buffer size for encoder and brightness sync data
+#define RPC_M2S_BUFFER_SIZE 48
+#define RPC_S2M_BUFFER_SIZE 48
+
+// Encoders : https://docs.qmk.fm/features/encoders
+// Flipped
+#define ENCODER_DIRECTION_FLIP
+
+
+#define LAYER_STATE_32BIT
+#define TRI_LAYER_LOWER_LAYER 29
+#define TRI_LAYER_UPPER_LAYER 30
+#define TRI_LAYER_ADJUST_LAYER 31
