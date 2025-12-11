@@ -31,13 +31,17 @@ bool is_hid_connected = false;
 enum layer_names {
     /* _M_XYZ = Mac Os, _W_XYZ = Win/Linux */
     MACOS,
+    WINDOWS,
+    LINUX,
 #if defined(TRI_LAYER_ENABLE)
-    LOWER,
-    UPPER,
-    ADJUST,
+    LOWER = 29,
+    UPPER = 30,  // 4
+    ADJUST = 31, // 5
 #endif
-    COMMAND,
-    TOTAL_LAYERS,
+};
+
+enum custom_keycodes {
+    KC_OS_SWITCH = SAFE_RANGE,
 };
 
 #if defined(COMBO_ENABLE)
@@ -45,6 +49,35 @@ enum combos {
     CMD_LAYER,
 };
 #endif // defined(COMBO_ENABLE)
+
+#if defined(OS_DETECTION_ENABLE)
+// Track detected OS
+os_variant_t current_os = OS_UNSURE;
+bool os_detection_complete = false;
+
+// Helper to get the layer for a detected OS
+uint8_t get_os_layer(os_variant_t os) {
+    switch (os) {
+        case OS_MACOS:
+        case OS_IOS:
+            return MACOS;
+        case OS_WINDOWS:
+            return WINDOWS;
+        case OS_LINUX:
+            return LINUX;
+        case OS_UNSURE:
+        default:
+            return MACOS; // default to MACOS
+    }
+}
+
+// Check if current base layer matches detected OS
+bool is_on_correct_os_layer(void) {
+    if (!os_detection_complete) return true; // No warning if OS not detected yet
+    uint8_t base_layer = get_highest_layer(layer_state & 0x7); // Only check first 3 layers (base OS layers)
+    return base_layer == get_os_layer(current_os);
+}
+#endif // defined(OS_DETECTION_ENABLE)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 /*
@@ -69,6 +102,52 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_TAB,   KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                       KC_H,     KC_J,     KC_K,    KC_L,    KC_SCLN, KC_QUOT,
     KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B,    KC_MUTE,   KC_F20,KC_N,     KC_M,     KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
                       TL_UPPR, KC_LCTL, KC_LOPT, KC_LCMD, KC_SPC,            KC_ENT, TL_LOWR, KC_RCMD,  KC_ROPT,  PB_1
+),
+/*
+ * Windows
+ * ╭──────┬──────┬──────┬──────┬──────┬──────╮ ╭───╮       ╭───╮  ╭──────┬──────┬──────┬──────┬──────┬──────╮
+ * │  `   │   1  │   2  │   3  │   4  │   5  │ │   │       │   │  │   6  │   7  │   8  │   9  │   0  │  -   │
+ * ├──────┼──────┼──────┼──────┼──────┼──────┤ │   │       │   │  ├──────┼──────┼──────┼──────┼──────┼──────┤
+ * │ ESC  │   Q  │   W  │   E  │   R  │   T  │ │   │       │   │  │   Y  │   U  │   I  │   O  │   P  │ Bspc │
+ * ├──────┼──────┼──────┼──────┼──────┼──────┤ ╰───╯       ╰───╯  ├──────┼──────┼──────┼──────┼──────┼──────┤
+ * │ Tab  │   A  │   S  │   D  │   F  │   G  ├───────╮    ╭───────┤   H  │   J  │   K  │   L  │   ;  │  '   │
+ * ├──────┼──────┼──────┼──────┼──────┼──────┤   ◯   │    │   ◯   ├──────┼──────┼──────┼──────┼──────┼──────┤
+ * │LShift│   Z  │   X  │   C  │   V  │   B  ├───────┤    ├───────┤   N  │   M  │   ,  │   .  │   /  │RShift│
+ * ╰──────┴──────┼──────┼──────┼──────┼──────┤       │    │       ├──────┼──────┼──────┼──────┼──────┴──────╯
+ *               │UPPER │ LCTL │ LWIN │ LALT │ Space │    │ Enter │ RALT │ RWIN │ Menu │LOWER │
+ *               ╰──────┴──────┴──────┴──────┤       │    │       ├──────┴──────┴──────┴──────╯
+ *                                           ╰───────╯    ╰───────╯
+*/
+
+[WINDOWS] = LAYOUT(
+    KC_GRV,   KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                       KC_6,     KC_7,     KC_8,    KC_9,    KC_0,    KC_MINS,
+    KC_ESC,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                       KC_Y,     KC_U,     KC_I,    KC_O,    KC_P,    KC_BSPC,
+    KC_TAB,   KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                       KC_H,     KC_J,     KC_K,    KC_L,    KC_SCLN, KC_QUOT,
+    KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B,    KC_MUTE,   KC_F20,KC_N,     KC_M,     KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
+                      TL_UPPR, KC_LCTL, KC_LGUI, KC_LALT, KC_SPC,            KC_ENT, TL_LOWR, KC_RALT,  KC_RGUI,  KC_APP
+),
+/*
+ * Linux
+ * ╭──────┬──────┬──────┬──────┬──────┬──────╮ ╭───╮       ╭───╮  ╭──────┬──────┬──────┬──────┬──────┬──────╮
+ * │  `   │   1  │   2  │   3  │   4  │   5  │ │   │       │   │  │   6  │   7  │   8  │   9  │   0  │  -   │
+ * ├──────┼──────┼──────┼──────┼──────┼──────┤ │   │       │   │  ├──────┼──────┼──────┼──────┼──────┼──────┤
+ * │ ESC  │   Q  │   W  │   E  │   R  │   T  │ │   │       │   │  │   Y  │   U  │   I  │   O  │   P  │ Bspc │
+ * ├──────┼──────┼──────┼──────┼──────┼──────┤ ╰───╯       ╰───╯  ├──────┼──────┼──────┼──────┼──────┼──────┤
+ * │ Tab  │   A  │   S  │   D  │   F  │   G  ├───────╮    ╭───────┤   H  │   J  │   K  │   L  │   ;  │  '   │
+ * ├──────┼──────┼──────┼──────┼──────┼──────┤   ◯   │    │   ◯   ├──────┼──────┼──────┼──────┼──────┼──────┤
+ * │LShift│   Z  │   X  │   C  │   V  │   B  ├───────┤    ├───────┤   N  │   M  │   ,  │   .  │   /  │RShift│
+ * ╰──────┴──────┼──────┼──────┼──────┼──────┤       │    │       ├──────┼──────┼──────┼──────┼──────┴──────╯
+ *               │UPPER │ LCTL │ LWIN │ LALT │ Space │    │ Enter │ RALT │ RWIN │ Menu │LOWER │
+ *               ╰──────┴──────┴──────┴──────┤       │    │       ├──────┴──────┴──────┴──────╯
+ *                                           ╰───────╯    ╰───────╯
+*/
+
+[LINUX] = LAYOUT(
+    KC_GRV,   KC_1,   KC_2,    KC_3,    KC_4,    KC_5,                       KC_6,     KC_7,     KC_8,    KC_9,    KC_0,    KC_MINS,
+    KC_ESC,   KC_Q,   KC_W,    KC_E,    KC_R,    KC_T,                       KC_Y,     KC_U,     KC_I,    KC_O,    KC_P,    KC_BSPC,
+    KC_TAB,   KC_A,   KC_S,    KC_D,    KC_F,    KC_G,                       KC_H,     KC_J,     KC_K,    KC_L,    KC_SCLN, KC_QUOT,
+    KC_LSFT,  KC_Z,   KC_X,    KC_C,    KC_V,    KC_B,    KC_MUTE,   KC_F20,KC_N,     KC_M,     KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
+                      TL_UPPR, KC_LCTL, KC_LGUI, KC_LALT, KC_SPC,            KC_ENT, TL_LOWR, KC_RALT,  KC_RGUI,  KC_APP
 ),
 /*
  * TRI_LAYER_LOWER_LAYER
@@ -133,45 +212,39 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 */
 
 [ADJUST] = LAYOUT(
-    QK_BOOT, XXXXXXX, XXXXXXX, XXXXXXX , XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+    QK_BOOT, KC_OS_SWITCH, XXXXXXX, XXXXXXX , XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX , XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, RM_PREV, RM_TOGG, RM_NEXT,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX , XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
                       _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, _______
 ),
 #endif // defined(TRI_LAYER_ENABLE)
-
-/*
- * TRI_LAYER_ADJUST_LAYER
- * ╭──────┬──────┬──────┬──────┬──────┬──────╮ ╭───╮       ╭───╮  ╭──────┬──────┬──────┬──────┬──────┬──────╮
- * │      │   1  │   2  │   3  │   4  │   5  │ │   │       │   │  │   6  │   7  │   8  │   9  │   0  │  -   │
- * ├──────┼──────┼──────┼──────┼──────┼──────┤ │   │       │   │  ├──────┼──────┼──────┼──────┼──────┼──────┤
- * │ ESC  │   Q  │   W  │   E  │   R  │   T  │ │   │       │   │  │   Y  │   U  │   I  │   O  │   P  │ Bspc │
- * ├──────┼──────┼──────┼──────┼──────┼──────┤ ╰───╯       ╰───╯  ├──────┼──────┼──────┼──────┼──────┼──────┤
- * │ Tab  │   A  │   S  │RGB_RM│RGB_T │RGB_M ├───────╮    ╭───────┤   H  │   J  │   K  │   L  │   ;  │  '   │
- * ├──────┼──────┼──────┼──────┼──────┼──────┤   ◯   │    │   ◯   ├──────┼──────┼──────┼──────┼──────┼──────┤
- * │LShift│   Z  │   X  │   C  │   V  │   B  ├───────┤    ├───────┤   N  │   M  │   ,  │   .  │   /  │RShift│
- * ╰──────┴──────┼──────┼──────┼──────┼──────┤       │    │       ├──────┼──────┼──────┼──────┼──────┴──────╯
- *               │UPPER │ LCTL │ LOPT │ LCMD │ Space │    │ Enter │ RCMD │ ROPT │ RALT │LOWER │
- *               ╰──────┴──────┴──────┴──────┤       │    │       ├──────┴──────┴──────┴──────╯
- *                                           ╰───────╯    ╰───────╯
-*/
-#if defined(KEY_OVERRIDE_ENABLE) || defined(COMBO_ENABLE)
-[COMMAND] = LAYOUT(
-    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX , XXXXXXX, XXXXXXX,                     KC_LEFT, KC_DOWN, KC_UP  , KC_RGHT, XXXXXXX, XXXXXXX,
-    XXXXXXX, KC_EQL,  KC_MINS, KC_LPRN , KC_RPRN, KC_PLUS,                     KC_COLN, KC_LBRC, KC_RBRC, KC_UNDS, KC_PERC, KC_PIPE,
-    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX , XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-                              _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   XXXXXXX, _______,  XXXXXXX,  XXXXXXX, _______
-),
-#endif  // defined(KEY_OVERRIDE_ENABLE)
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
+#if defined(OS_DETECTION_ENABLE)
+        case KC_OS_SWITCH:
+            if (record->event.pressed) {
+                if (os_detection_complete) {
+                    layer_move(get_os_layer(current_os));
+                }
+            }
+            return false;
+#endif // defined(OS_DETECTION_ENABLE)
     }
     return true;
 };
+
+#if defined(COMBO_ENABLE)
+const uint16_t PROGMEM combo_corner_quantum_boot[] = {
+    KC_LCMD, KC_LSFT, KC_GRV, KC_5, COMBO_END
+};
+
+combo_t key_combos[] = {
+    COMBO(combo_corner_quantum_boot, QK_BOOT)
+};
+#endif // defined(COMBO_ENABLE)
 
 #if defined(OLED_ENABLE)
 
@@ -203,40 +276,6 @@ void set_brightness(uint8_t delta) {
     oled_set_brightness(level);
 }
 #endif
-
-#if defined(KEY_OVERRIDE_ENABLE)
-// This doesn't work because left and right command are the same key
-bool momentary_layer(bool key_down, void *layer) {
-    if (key_down) {
-        layer_on((uint8_t)(uintptr_t)layer);
-    } else {
-        layer_off((uint8_t)(uintptr_t)layer);
-    }
-
-    return false;
-}
-const key_override_t cmd_override = {.trigger_mods          = MOD_BIT(KC_LCMD) | MOD_BIT(KC_RCMD),                       //
-                                   .layers                 = ~0,                                          //
-                                   .suppressed_mods        = MOD_BIT(KC_LCMD) | MOD_BIT(KC_RCMD),                       //
-                                   .options                = ko_option_activation_trigger_down,                 //
-                                   .negative_mod_mask      = (uint8_t) ~(MOD_BIT(KC_LCMD) | MOD_BIT(KC_RCMD)),          //
-                                   .custom_action          = momentary_layer,                                           //
-                                   .context                = (void *)COMMAND,                                          //
-                                   .trigger                = KC_NO,                                                     //
-                                   .replacement            = KC_NO,                                                     //
-                                   .enabled                = NULL};
-const key_override_t *key_overrides[] = {
-    &cmd_override,
-};
-#endif  // defined(KEY_OVERRIDE_ENABLE)
-
-#if defined(COMBO_ENABLE)
-const uint16_t PROGMEM cmd_combo[] = {KC_LCMD, KC_RCMD, COMBO_END};
-
-combo_t key_combos[] = {
-    [CMD_LAYER] = COMBO(cmd_combo, MO(COMMAND))
-};
-#endif // defined(COMBO_ENABLE)
 
 #if defined(ENCODER_ENABLE)
 uint8_t mod_state;
@@ -283,8 +322,6 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
                     break;
                 #endif
             case UPPER:
-            case ADJUST:
-            case COMMAND:
             default:
                 break;
         }
@@ -325,7 +362,6 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
                     break;
                 #endif
             case ADJUST:
-            case COMMAND:
             default:
                 break;
         }
@@ -337,6 +373,9 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
 
 #if defined(OS_DETECTION_ENABLE)
 bool process_detected_host_os_user(os_variant_t detected_os) {
+    current_os = detected_os;
+    os_detection_complete = true;
+
     switch (detected_os) {
         case OS_MACOS:
         case OS_IOS:
@@ -371,6 +410,12 @@ void oled_current_layer(void) {
         case MACOS:
             oled_write_P(PSTR("macos"), false);
             break;
+        case WINDOWS:
+            oled_write_P(PSTR("win"), false);
+            break;
+        case LINUX:
+            oled_write_P(PSTR("linux"), false);
+            break;
         case LOWER:
             oled_write_P(PSTR("lower"), false);
             break;
@@ -380,12 +425,15 @@ void oled_current_layer(void) {
         case ADJUST:
             oled_write_P(PSTR("adjst"), false);
             break;
-        case COMMAND:
-            oled_write_P(PSTR("cmd"), false);
-            break;
         default:
             oled_write_ln_P(PSTR("undef"), false);
     }
+#if defined(OS_DETECTION_ENABLE)
+    // Show indicator if on wrong OS layer
+    if (!is_on_correct_os_layer()) {
+        oled_write_P(PSTR(" !"), false);
+    }
+#endif // defined(OS_DETECTION_ENABLE)
 }
 
 void oled_master(void) {

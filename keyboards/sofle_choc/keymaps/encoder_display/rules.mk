@@ -34,10 +34,8 @@ ENCODER_ENABLE = yes
 KEYBOARD_SHARED_EP = no
 
 # Raw HID:
-RAW_ENABLE = yes
+RAW_ENABLE = no
 
-# SOCD Cleaner: Simultaneous Opposite Cardinal Direction handler
-SOCD_CLEANER_ENABLE = yes
 
-# Always include socd_handler.c (provides stubs when SOCD is disabled)
-SRC += socd_handler.c
+# Debugging: https://docs.qmk.fm/faq_debug
+CONSOLE_ENABLE = yes

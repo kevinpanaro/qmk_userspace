@@ -50,3 +50,9 @@
 // Encoders : https://docs.qmk.fm/features/encoders
 // Flipped
 #define ENCODER_DIRECTION_FLIP
+
+// 32 layers and the last 3 are tri layers
+#define LAYER_STATE_32BIT
+#define TRI_LAYER_LOWER_LAYER 29
+#define TRI_LAYER_UPPER_LAYER 30
+#define TRI_LAYER_ADJUST_LAYER 31

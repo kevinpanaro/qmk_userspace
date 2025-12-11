@@ -13,33 +13,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-// Standard C libraries
-#include <math.h>
 #include <stdint.h>
-#include <string.h>
-
-// QMK libraries
-#include QMK_KEYBOARD_H
 #include "action.h"
 #include "action_layer.h"
 #include "action_util.h"
 #include "keycodes.h"
 #include "oled_driver.h"
+#include "os_detection.h"
 #include "quantum_keycodes.h"
-#include "raw_hid.h"
-#include "transactions.h"
+#include "socd_cleaner.h"
 
-// User defined libraries
-#include "layer_names.h"
-#include "socd_handler.h"
+#include "print.h"
 
-
-// Other definitions
 #if defined(RAW_ENABLE)
+#include "raw_hid.h"
+// #include <string.h>
 #define RAW_EPSIZE 32
 bool is_hid_connected = false;
 #endif  // defined(RAW_ENABLE)
-
+#include QMK_KEYBOARD_H
+#include "transactions.h"
+#include <string.h>
 
 // Encoder action tracking structures
 typedef struct {
@@ -74,25 +68,84 @@ typedef struct {
     brightness_info_t brightness_info;
 } encoder_sync_data_t;
 
-// enum layer_names {
-//     MACOS,
-//     PC,
-//     GAME,
-//     VLRNT,
-// #if defined(TRI_LAYER_ENABLE)
-//     LOWER = 29,
-//     UPPER = 30,
-//     ADJUST = 31,
-// #endif
-// };
+enum layer_names {
+    /* _M_XYZ = Mac Os, _W_XYZ = Win/Linux */
+    MACOS,
+    WIN,
+    GAME,
+    VLRNT,
+#if defined(TRI_LAYER_ENABLE)
+    LOWER = 29,
+    UPPER = 30,  // 4
+    ADJUST = 31, // 5
+#endif
+};
 
-// static enum socd_cleaner_resolution current_resolution = SOCD_CLEANER_OFF;
-// enum custom_keycodes {
-//     SOCD_CYCL = SAFE_RANGE,
-// };
-// Screensaver
-// static uint32_t last_input = 0;  // timestamp of last key press
-// #define SCREENSAVER_TIMEOUT 1000  // 60 seconds
+static enum socd_cleaner_resolution current_resolution = SOCD_CLEANER_OFF;
+enum custom_keycodes {
+    SOCD_CYCL = SAFE_RANGE,
+    KC_OS,
+};
+
+
+#if defined(OS_DETECTION_ENABLE)
+// Track detected OS
+os_variant_t current_os = OS_UNSURE;
+bool os_detection_complete = false;
+
+// Helper to get the layer for a detected OS
+uint8_t get_os_layer(os_variant_t os) {
+    switch (os) {
+        case OS_MACOS:
+            return MACOS;
+        case OS_IOS:
+            return MACOS;
+        case OS_WINDOWS:
+        //     return WINDOWS;
+        case OS_LINUX:
+        //     return LINUX;
+        case OS_UNSURE:
+        default:
+            return WIN; // default to UNSURE
+    }
+}
+
+static const char os_names[][8] = {
+    [OS_UNSURE]  = "?",
+    [OS_LINUX]   = "linux",
+    [OS_WINDOWS] = "win",
+    [OS_MACOS]   = "mac",
+    [OS_IOS]     = "ios",
+};
+
+
+// Check if current base layer matches detected OS
+bool is_on_correct_os_layer(void) {
+    if (!os_detection_complete) return true; // No warning if OS not detected yet
+    uint8_t base_layer = get_highest_layer(default_layer_state & 0x7); // Only check first 2 layers (base OS layers)
+    return (base_layer == get_os_layer(current_os));
+}
+
+bool process_detected_host_os_user(os_variant_t detected_os) {
+    current_os = detected_os;
+    os_detection_complete = true;
+    default_layer_set(get_os_layer(detected_os));
+
+    switch (detected_os) {
+        case OS_MACOS:
+            break;
+        case OS_IOS:
+            break;
+        case OS_WINDOWS:
+            break;
+        case OS_LINUX:
+            break;
+        case OS_UNSURE:
+            break;
+    }
+    return true;
+}
+#endif // defined(OS_DETECTION_ENABLE)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 /*
@@ -120,7 +173,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 
 /*
- * PC
+ * WIN
  * ╭──────┬──────┬──────┬──────┬──────┬──────╮ ╭───╮       ╭───╮  ╭──────┬──────┬──────┬──────┬──────┬──────╮
  * │  `   │   1  │   2  │   3  │   4  │   5  │ │   │       │   │  │   6  │   7  │   8  │   9  │   0  │  -   │
  * ├──────┼──────┼──────┼──────┼──────┼──────┤ │   │       │   │  ├──────┼──────┼──────┼──────┼──────┼──────┤
@@ -134,7 +187,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  *               ╰──────┴──────┴──────┴──────┤       │    │       ├──────┴──────┴──────┴──────╯
  *                                           ╰───────╯    ╰───────╯
 */
-[PC] = LAYOUT(
+[WIN] = LAYOUT(
     KC_GRV,   KC_1,     KC_2,     KC_3,     KC_4,     KC_5,                             KC_6,     KC_7,     KC_8,     KC_9,     KC_0,     KC_MINS,
     KC_ESC,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,                             KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_BSPC,
     KC_TAB,   KC_A,     KC_S,     KC_D,     KC_F,     KC_G,                             KC_H,     KC_J,     KC_K,     KC_L,     KC_SCLN,  KC_QUOT,
@@ -234,7 +287,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 /*
  * TRI_LAYER_ADJUST_LAYER
  * ╭──────┬──────┬──────┬──────┬──────┬──────╮ ╭───╮       ╭───╮  ╭──────┬──────┬──────┬──────┬──────┬──────╮
- * │ BOOT │MACOS │  PC  │ GAME │VLRNT │      │ │   │       │   │  │      │      │      │      │      │ BOOT │
+ * │ BOOT │MACOS │  WIN │ GAME │VLRNT │      │ │   │       │   │  │      │      │      │      │      │ BOOT │
  * ├──────┼──────┼──────┼──────┼──────┼──────┤ │   │       │   │  ├──────┼──────┼──────┼──────┼──────┼──────┤
  * │      │      │      │      │      │      │ │   │       │   │  │      │      │      │      │      │      │
  * ├──────┼──────┼──────┼──────┼──────┼──────┤ ╰───╯       ╰───╯  ├──────┼──────┼──────┼──────┼──────┼──────┤
@@ -247,181 +300,57 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  *                                           ╰───────╯    ╰───────╯
 */
 [ADJUST] = LAYOUT(
-    QK_BOOT,  DF(MACOS),DF(PC),   DF(GAME), DF(VLRNT),XXXXXXX,                          XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  QK_BOOT,
+    QK_BOOT,  DF(MACOS),DF(WIN),   DF(GAME), DF(VLRNT),XXXXXXX,                          XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  DB_TOGG,  QK_BOOT,
     XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,                          XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,
     XXXXXXX,  XXXXXXX,  XXXXXXX,  RM_PREV,  RM_TOGG,  RM_NEXT,                          XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,
     XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX , XXXXXXX,  XXXXXXX,  XXXXXXX,      XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,
-                        _______,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,      XXXXXXX,  _______,  XXXXXXX,  DF(0),    QK_RBT
+                        _______,  XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,      XXXXXXX,  _______,  XXXXXXX,  KC_OS,    QK_RBT
 ),
 #endif // defined(TRI_LAYER_ENABLE)
 };
 
 layer_state_t layer_state_set_user(layer_state_t state) {
-    return socd_layer_state_set(state);
+    socd_cleaner_enabled = IS_LAYER_ON_STATE(state, GAME);
+    #ifdef CONSOLE_ENABLE
+        dprintf("Layer: 0x%02X\n", get_highest_layer(layer_state | default_layer_state));
+    #endif
+    return state;
 }
 
-// SOCD Cleaner : https://getreuer.info/posts/keyboards/socd-cleaner/
-// socd_cleaner_t socd_opposing_pairs[] = {
-//     {{KC_A, KC_D}, SOCD_CLEANER_LAST},
-// };
+socd_cleaner_t socd_opposing_pairs[] = {
+    // {{KC_W, KC_S}, SOCD_CLEANER_LAST},
+    {{KC_A, KC_D}, SOCD_CLEANER_NEUTRAL},
+};
+
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (!socd_process_record(keycode, record)) {
-        return false;
+    #ifdef CONSOLE_ENABLE
+        // dprintf("KL: kc: 0x%04X, col: %2u, row: %2u, pressed: %u, time: %5u, int: %u, count: %u\n", keycode, record->event.key.col, record->event.key.row, record->event.pressed, record->event.time, record->tap.interrupted, record->tap.count);
+    #endif
+    switch (keycode) {
+        case SOCD_CYCL:
+            if (record->event.pressed) {
+                current_resolution++;
+                if (current_resolution == SOCD_CLEANER_NUM_RESOLUTIONS) {
+                    current_resolution = SOCD_CLEANER_OFF;
+                }
+                socd_opposing_pairs[0].resolution = current_resolution;
+            }
+    #if defined(OS_DETECTION_ENABLE)
+        case KC_OS:
+            if (record->event.pressed) {
+                if (os_detection_complete) {
+                    default_layer_set(get_os_layer(current_os));
+                }
+            }
+            return false;
+    #endif // defined(OS_DETECTION_ENABLE)
+        break;
     }
-    // Any other process_record_user logic here
     return true;
 };
 
-
-#if defined(COMBO_ENABLE)
-const uint16_t PROGMEM combo_corner_quantum_boot[] = {
-    KC_LCMD, KC_LSFT, KC_GRV, KC_5, COMBO_END
-};
-
-combo_t key_combos[] = {
-    COMBO(combo_corner_quantum_boot, QK_BOOT)
-};
-#endif // defined(COMBO_ENABLE)
-
-
 #if defined(OLED_ENABLE)
-
-// Screensaver
-// #define NUM_DOTS 64   // number of dots on the screen
-
-// typedef struct {
-//     uint8_t x;
-//     uint8_t y;
-//     int8_t vx;
-//     int8_t vy;
-// } dot_t;
-
-// static dot_t dots[NUM_DOTS];
-// static bool dots_initialized = false;
-
-// void init_dots(void) {
-//     const uint8_t w = OLED_DISPLAY_HEIGHT;
-//     const uint8_t h = OLED_DISPLAY_WIDTH;
-
-//     for (uint8_t i = 0; i < NUM_DOTS; i++) {
-//         dots[i].x = rand() % w;
-//         dots[i].y = rand() % h;
-
-//         // Random velocity -1 or 1
-//         dots[i].vx = (rand() % 2) ? 1 : -1;
-//         dots[i].vy = (rand() % 2) ? 1 : -1;
-//     }
-
-//     dots_initialized = true;
-// }
-
-// void crazy_bouncing_dots(void) {
-//     const uint8_t w = OLED_DISPLAY_HEIGHT;
-//     const uint8_t h = OLED_DISPLAY_WIDTH;
-
-//     if (!dots_initialized) init_dots();
-
-//     oled_clear();
-
-//     for (uint8_t i = 0; i < NUM_DOTS; i++) {
-//         dot_t *d = &dots[i];
-
-//         // Draw dot
-//         if (d->x < w && d->y < h)
-//             oled_write_pixel(d->x, d->y, true);
-
-//         // Move dot
-//         d->x += d->vx;
-//         d->y += d->vy;
-
-//         // Bounce on edges
-//         if (d->x == 0 || d->x >= w - 1) d->vx = -d->vx;
-//         if (d->y == 0 || d->y >= h - 1) d->vy = -d->vy;
-//     }
-// }
-
-// #define MAX_OFFSET 6       // max pixels moved
-// #define TARGET_DOTS 108    // total dots
-// #define WAVE_WIDTH 5        // number of rows affected per wavefront
-// #define OVERSHOOT 1.0f      // fraction of MAX_OFFSET to overshoot past original
-
-// static float ripple_phase = -WAVE_WIDTH;
-// static float ripple_speed = 0.6f;
-// static bool ripple_initialized = false;
-
-// void init_ripple(void) {
-//     ripple_phase = -WAVE_WIDTH;  // negative so wave enters gradually
-//     ripple_initialized = true;
-// }
-
-// void screensaver_ripple(void) {
-//     const uint8_t w = OLED_DISPLAY_HEIGHT; // vertical OLED width
-//     const uint8_t h = OLED_DISPLAY_WIDTH;  // vertical OLED height
-
-//     // Compute near-square grid
-//     uint8_t grid_cols = sqrt(TARGET_DOTS * w / (float)h);
-//     if (grid_cols == 0) grid_cols = 1;
-//     uint8_t grid_rows = (TARGET_DOTS + grid_cols - 1) / grid_cols;
-
-//     float spacing_x = w / (float)grid_cols;
-//     float spacing_y = h / (float)grid_rows;
-//     float spacing = (spacing_x < spacing_y ? spacing_x : spacing_y);
-
-//     if (!ripple_initialized) init_ripple();
-
-//     oled_clear();
-
-//     for (uint8_t row = 0; row < grid_rows; row++) {
-//         for (uint8_t col = 0; col < grid_cols; col++) {
-//             int x = col * spacing + spacing / 2;
-//             int y = row * spacing + spacing / 2;
-
-//             float offset = 0.0f;
-//             float phase_diff = row - ripple_phase;
-
-//             if (phase_diff >= 0 && phase_diff <= WAVE_WIDTH) {
-//                 float t = (phase_diff / WAVE_WIDTH) * 3.14159265f;
-//                 offset = MAX_OFFSET * sinf(t) * (1.0f + OVERSHOOT * sinf(t));
-//                 offset -= MAX_OFFSET * OVERSHOOT * sinf(t) * sinf(t); // subtle rebound
-//             }
-
-//             int draw_y = y + (int)offset;
-//             if (draw_y < h && x < w) oled_write_pixel(x, draw_y, true);
-//         }
-//     }
-
-
-//     ripple_phase += ripple_speed;
-
-//     // Reset phase off-screen for smooth entry
-//     if (ripple_phase > grid_rows + WAVE_WIDTH) ripple_phase = -WAVE_WIDTH;
-
-//     // // slow the ripple down
-//     // float t = ripple_phase / grid_rows; // normalized 0..1 across visible grid
-
-//     // float speed_factor = 1.0f;  // default normal speed
-
-//     // if (ripple_phase >= 0 && ripple_phase <= grid_rows) {
-//     //     speed_factor = cosf(t * (3.14159 / 2)); // slows down only while on-screen
-//     // }
-
-//     // ripple_phase += ripple_speed * speed_factor;
-
-//     // // Reset to start just above top so it enters smoothly
-//     // if (ripple_phase > grid_rows + WAVE_WIDTH) ripple_phase = -WAVE_WIDTH;
-
-
-
-// }
-
-
-// // -------------------- Screensaver action --------------------
-// void (*current_screensaver)(void) = screensaver_ripple;
-// void screensaver_update(void) {
-//     current_screensaver();
-// }
-// end of screensaver
 
 enum brightness {
     DOWN,
@@ -470,148 +399,7 @@ void set_brightness(uint8_t delta) {
         transaction_rpc_send(ENCODER_SYNC, sizeof(sync_data), &sync_data);
     }
 }
-
-// Rotate both OLEDs the same way
-oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    if (is_keyboard_master()) {
-        return OLED_ROTATION_270;
-    }
-    else {
-        return OLED_ROTATION_270;  // Match master rotation
-    }
-    return rotation;
-}
-
-void oled_current_layer(void) {
-    // Current Layer - check both layer_state and default_layer_state
-    uint8_t layer = get_highest_layer(layer_state | default_layer_state);
-    switch (layer) {
-        case MACOS:
-            oled_write_P(PSTR("macos"), false);
-            break;
-        case PC:
-            oled_write_P(PSTR("pc   "), false);
-            break;
-        case GAME:
-            oled_write_P(PSTR("game "), false);
-            break;
-        case VLRNT:
-            oled_write_P(PSTR("val  "), false);
-            break;
-        case LOWER:
-            oled_write_P(PSTR("lower"), false);
-            break;
-        case UPPER:
-            oled_write_P(PSTR("raise"), false);
-            break;
-        case ADJUST:
-            oled_write_P(PSTR("adjst"), false);
-            break;
-        default:
-            oled_write_ln_P(PSTR("undef"), false);
-    }
-}
-
-void oled_render_encoder_status(void) {
-    uint32_t current_time = timer_read32();
-
-    // Each side shows only its own encoder
-    uint8_t encoder_index = is_keyboard_master() ? 0 : 1;
-
-    // Position cursor at second to last line
-    uint8_t max_lines = oled_max_lines();
-    uint8_t target_line = max_lines >= 2 ? max_lines - 2 : 0;
-    oled_set_cursor(0, target_line);
-
-    // Display this side's encoder action
-    if (last_encoder_action[encoder_index].is_active &&
-        (current_time - last_encoder_action[encoder_index].timestamp < ENCODER_DISPLAY_TIMEOUT)) {
-        oled_write(last_encoder_action[encoder_index].display_text, false);
-    } else {
-        oled_write_P(PSTR("     "), false);  // Clear with 5 spaces
-        last_encoder_action[encoder_index].is_active = false;
-    }
-
-    // Show brightness level temporarily if active on the last line
-    if (brightness_display.is_active &&
-        (current_time - brightness_display.timestamp < ENCODER_DISPLAY_TIMEOUT)) {
-        // Position cursor at last line
-        oled_set_cursor(0, max_lines - 1);
-
-        if (brightness_display.is_oled_brightness) {
-            // Show exact OLED brightness level, pad to 5 chars
-            char brightness_str[6];
-            snprintf(brightness_str, sizeof(brightness_str), "%-5d", brightness_display.level);
-            oled_write(brightness_str, false);
-        } else {
-            // System brightness - show indicator, pad to 5 chars
-            oled_write_P(PSTR("SYS  "), false);
-        }
-    } else {
-        // Clear brightness line when not active
-        if (brightness_display.is_active == false) {
-            oled_set_cursor(0, max_lines - 1);
-            oled_write_P(PSTR("     "), false);
-        }
-        brightness_display.is_active = false;
-    }
-}
-
-
-void oled_master(void) {
-    oled_current_layer();
-    oled_write_P(PSTR("\n"), false);
-
-    // Only show SOCD state when on GAME layer
-    uint8_t current_layer = get_highest_layer(layer_state | default_layer_state);
-    if ((current_layer == GAME) || (current_layer == VLRNT)) {
-        oled_current_socd_state();
-    } else {
-        oled_write_P(PSTR("     "), false);  // Clear with 5 spaces
-    }
-
-    oled_write_P(PSTR("\n"), false);
-
-    oled_render_encoder_status();
-}
-
-void oled_slave(void) {
-    // Show encoder status on slave side too
-    oled_current_layer();
-    oled_write_P(PSTR("\n"), false);
-    oled_render_encoder_status();
-    // screensaver_update();
-}
-
-bool oled_task_user(void) {
-    // uint32_t idle = timer_elapsed32(last_input);
-
-    // if (idle > SCREENSAVER_TIMEOUT) {
-    //     screensaver_update();   // Run screensaver when idle
-    //     return false;           // Skip normal OLED drawing
-    // }
-
-    if (is_keyboard_master()) {
-        oled_master();  // Renders master
-    } else {
-        oled_slave();  // Renders slave
-    }
-    return false;
-}
-
-void oled_render_boot(bool bootloader) {
-    oled_clear();
-    oled_set_cursor(0, 0);
-    if (bootloader) {
-        oled_write_P(PSTR("fw update"), true);
-    } else {
-        oled_write_P(PSTR("rebooting"), true);
-    }
-
-    oled_render_dirty(true);
-}
-
-#endif // defined(OLED_ENABLE)
+#endif
 
 #if defined(ENCODER_ENABLE)
 uint8_t mod_state;
@@ -788,7 +576,6 @@ void encoder_sync_slave_handler(uint8_t in_buflen, const void* in_data, uint8_t 
     brightness_display = sync_data->brightness_info;
 }
 
-
 void keyboard_post_init_user(void) {
     transaction_register_rpc(ENCODER_SYNC, encoder_sync_slave_handler);
 }
@@ -822,24 +609,212 @@ void housekeeping_task_user(void) {
     }
 }
 
-#if defined(OS_DETECTION_ENABLE)
-bool process_detected_host_os_user(os_variant_t detected_os) {
-    switch (detected_os) {
-        case OS_MACOS:
-        case OS_IOS:
-            break;
-        case OS_WINDOWS:
-            break;
-        case OS_LINUX:
-            break;
-        case OS_UNSURE:
-            break;
+// #if defined(OS_DETECTION_ENABLE)
+// bool process_detected_host_os_user(os_variant_t detected_os) {
+//     switch (detected_os) {
+//         case OS_MACOS:
+//         case OS_IOS:
+//             break;
+//         case OS_WINDOWS:
+//             break;
+//         case OS_LINUX:
+//             break;
+//         case OS_UNSURE:
+//             break;
+//     }
+//     return true;
+// }
+// #endif // defined(OS_DETECTION_ENABLE)
+
+#if defined(COMBO_ENABLE)
+const uint16_t PROGMEM combo_corner_quantum_boot[] = {
+    KC_LCMD, KC_LSFT, KC_GRV, KC_5, COMBO_END
+};
+
+combo_t key_combos[] = {
+    COMBO(combo_corner_quantum_boot, QK_BOOT)
+};
+#endif // defined(COMBO_ENABLE)
+
+#if defined(OLED_ENABLE)
+
+// Rotate both OLEDs the same way
+oled_rotation_t oled_init_user(oled_rotation_t rotation) {
+    if (is_keyboard_master()) {
+        return OLED_ROTATION_270;
     }
-    return true;
+    else {
+        return OLED_ROTATION_270;  // Match master rotation
+    }
+    return rotation;
 }
-#endif // defined(OS_DETECTION_ENABLE)
 
+void oled_current_layer(void) {
+    // Current Layer - check both layer_state and default_layer_state
+    uint8_t layer = get_highest_layer(layer_state | default_layer_state);
+    switch (layer) {
+        case MACOS:
+            oled_write_P(PSTR("macos"), !is_on_correct_os_layer());
+            break;
+        case WIN:
+            oled_write_P(PSTR("pc   "), !is_on_correct_os_layer());
+            break;
+        case GAME:
+            oled_write_P(PSTR("game "), false);
+            break;
+        case VLRNT:
+            oled_write_P(PSTR("val  "), false);
+            break;
+        case LOWER:
+            oled_write_P(PSTR("lower"), false);
+            break;
+        case UPPER:
+            oled_write_P(PSTR("raise"), false);
+            break;
+        case ADJUST:
+            oled_write_P(PSTR("adjst"), false);
+            break;
+        default:
+            oled_write_ln_P(PSTR("undef"), false);
+    }
+}
 
+void oled_current_socd_state(void) {
+    switch (current_resolution) {
+        // Disable SOCD filtering for this key pair.
+        case SOCD_CLEANER_OFF:
+            oled_write_P(PSTR("off  "), false);
+            break;
+
+        // Last input priority with reactivation.
+        case SOCD_CLEANER_LAST:
+            oled_write_P(PSTR("last  "), false);
+            break;
+
+        // Neutral resolution. When both keys are pressed, they cancel.
+        case SOCD_CLEANER_NEUTRAL:
+            oled_write_P(PSTR("nutrl"), false);
+            break;
+
+        // Key 0 always wins.
+        case SOCD_CLEANER_0_WINS:
+            oled_write_P(PSTR("0wins"), false);
+            break;
+
+        // Key 1 always wins.
+        case SOCD_CLEANER_1_WINS:
+            oled_write_P(PSTR("1wins"), false);
+            break;
+
+        // Sentinel to count the number of resolution strategies.
+        // case SOCD_CLEANER_NUM_RESOLUTIONS:
+        //     oled_write_P(PSTR("undef"), false);
+        //     break;
+        default:
+            oled_write_P(PSTR("     "), false);
+    }
+}
+void oled_render_encoder_status(void) {
+    uint32_t current_time = timer_read32();
+
+    // Each side shows only its own encoder
+    uint8_t encoder_index = is_keyboard_master() ? 0 : 1;
+
+    // Position cursor at second to last line
+    uint8_t max_lines = oled_max_lines();
+    uint8_t target_line = max_lines >= 2 ? max_lines - 2 : 0;
+    oled_set_cursor(0, target_line);
+
+    // Display this side's encoder action
+    if (last_encoder_action[encoder_index].is_active &&
+        (current_time - last_encoder_action[encoder_index].timestamp < ENCODER_DISPLAY_TIMEOUT)) {
+        oled_write(last_encoder_action[encoder_index].display_text, false);
+    } else {
+        oled_write_P(PSTR("     "), false);  // Clear with 5 spaces
+        last_encoder_action[encoder_index].is_active = false;
+    }
+
+    // Show brightness level temporarily if active on the last line
+    if (brightness_display.is_active &&
+        (current_time - brightness_display.timestamp < ENCODER_DISPLAY_TIMEOUT)) {
+        // Position cursor at last line
+        oled_set_cursor(0, max_lines - 1);
+
+        if (brightness_display.is_oled_brightness) {
+            // Show exact OLED brightness level, pad to 5 chars
+            char brightness_str[6];
+            snprintf(brightness_str, sizeof(brightness_str), "%-5d", brightness_display.level);
+            oled_write(brightness_str, false);
+        } else {
+            // System brightness - show indicator, pad to 5 chars
+            oled_write_P(PSTR("SYS  "), false);
+        }
+    } else {
+        // Clear brightness line when not active
+        if (brightness_display.is_active == false) {
+            oled_set_cursor(0, max_lines - 1);
+            oled_write_P(PSTR("     "), false);
+        }
+        brightness_display.is_active = false;
+    }
+}
+
+void oled_master(void) {
+    oled_current_layer();
+    oled_write_P(PSTR("\n"), false);
+
+    // Only show SOCD state when on GAME layer
+    uint8_t current_layer = get_highest_layer(layer_state | default_layer_state);
+    if ((current_layer == GAME) || (current_layer == VLRNT)) {
+        oled_current_socd_state();
+    } else {
+        oled_write_P(PSTR("     "), false);  // Clear with 5 spaces
+    }
+    oled_write_P(PSTR("\n"), false);
+
+    oled_render_encoder_status();
+}
+
+void oled_slave(void) {
+    // Show encoder status on slave side too
+    oled_current_layer();
+    oled_write_P(PSTR("\n"), false);
+    oled_render_encoder_status();
+}
+
+void render_debug(void) {
+    oled_clear();
+    oled_write_ln("debug", false);
+    oled_write_ln(os_names[current_os], false);
+}
+
+bool oled_task_user(void) {
+    if (debug_config.enable) {
+        render_debug();
+        return false;
+    }
+
+    if (is_keyboard_master()) {
+        oled_master();  // Renders master
+    } else {
+        oled_slave();  // Renders slave
+    }
+    return false;
+}
+
+void oled_render_boot(bool bootloader) {
+    oled_clear();
+    oled_set_cursor(0, 0);
+    if (bootloader) {
+        oled_write_P(PSTR("fw update"), true);
+    } else {
+        oled_write_P(PSTR("rebooting"), true);
+    }
+
+    oled_render_dirty(true);
+}
+
+#endif // defined(OLED_ENABLE)
 
 // Shutdown User : https://docs.qmk.fm/custom_quantum_functions#keyboard-shutdown-reboot-code
 bool shutdown_user(bool jump_to_bootloader) {
