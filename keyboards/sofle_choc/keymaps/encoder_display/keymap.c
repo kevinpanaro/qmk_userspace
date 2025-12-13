@@ -101,7 +101,7 @@ uint8_t get_os_layer(os_variant_t os) {
         case OS_IOS:
             return MACOS;
         case OS_WINDOWS:
-        //     return WINDOWS;
+            return WIN;
         case OS_LINUX:
         //     return LINUX;
         case OS_UNSURE:
@@ -129,7 +129,7 @@ bool is_on_correct_os_layer(void) {
 bool process_detected_host_os_user(os_variant_t detected_os) {
     current_os = detected_os;
     os_detection_complete = true;
-    default_layer_set(get_os_layer(detected_os));
+    set_single_default_layer(get_os_layer(current_os));
 
     switch (detected_os) {
         case OS_MACOS:
@@ -336,14 +336,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 }
                 socd_opposing_pairs[0].resolution = current_resolution;
             }
+        break;
     #if defined(OS_DETECTION_ENABLE)
         case KC_OS:
             if (record->event.pressed) {
                 if (os_detection_complete) {
-                    default_layer_set(get_os_layer(current_os));
+                    set_single_default_layer(get_os_layer(current_os));
                 }
             }
-            return false;
+            // return false;
     #endif // defined(OS_DETECTION_ENABLE)
         break;
     }
