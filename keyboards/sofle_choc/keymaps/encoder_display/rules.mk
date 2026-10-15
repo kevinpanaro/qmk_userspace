@@ -22,7 +22,7 @@ WPM_ENABLE = no
 
 # RGB Matrix : https://docs.qmk.fm/features/rgb_matrix
 # Custom : https://docs.qmk.fm/features/rgb_matrix#custom-rgb-matrix-effects
-RGB_MATRIX_CUSTOM_USER = yes
+RGB_MATRIX_ENABLE = yes
 
 # Encoders : https://docs.qmk.fm/features/encoders
 # Better encoders to support modifiers
@@ -34,7 +34,7 @@ ENCODER_ENABLE = yes
 KEYBOARD_SHARED_EP = no
 
 # Raw HID:
-RAW_ENABLE = no
+RAW_ENABLE = yes
 
 
 # Debugging: https://docs.qmk.fm/faq_debug

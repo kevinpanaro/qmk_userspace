@@ -24,9 +24,12 @@
 // I've found this helps with some ProMicros where the slave does not boot
 #define SPLIT_USB_DETECT
 
+// Additional Config Options: https://docs.qmk.fm/features/rgb_matrix#additional-configh-options
 #define RGB_MATRIX_SLEEP     // turn off effects when suspended
 #define SPLIT_TRANSPORT_MIRROR             // If LED_MATRIX_KEYPRESSES or LED_MATRIX_KEYRELEASES is enabled, you also will want to enable SPLIT_TRANSPORT_MIRROR
-#define RGB_MATRIX_MAXIMUM_BRIGHTNESS 1
+#undef RGB_MATRIX_MAXIMUM_BRIGHTNESS
+#define RGB_MATRIX_MAXIMUM_BRIGHTNESS 10
+#define RGB_MATRIX_MODE_NAME_ENABLE
 
 // OLED Basic Configuration : https://docs.qmk.fm/features/oled_driver#basic-configuration
 #define OLED_BRIGHTNESS 0x80  // default brightness, 0 to 255
@@ -50,9 +53,9 @@
 // Custom data sync for encoder display and brightness
 #define SPLIT_TRANSACTION_IDS_USER ENCODER_SYNC, OLED_SYNC
 
-// RPC buffer size for encoder and brightness sync data
-#define RPC_M2S_BUFFER_SIZE 48
-#define RPC_S2M_BUFFER_SIZE 48
+// RPC buffer size for encoder/brightness/app-context sync data
+#define RPC_M2S_BUFFER_SIZE 64
+#define RPC_S2M_BUFFER_SIZE 64
 
 // Encoders : https://docs.qmk.fm/features/encoders
 // Flipped
