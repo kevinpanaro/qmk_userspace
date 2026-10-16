@@ -637,7 +637,7 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
     display_mods = mod_state;
     clear_mods();
 
-    knob_action_t action = resolve_knob(get_highest_layer(layer_state), current_app,
+    knob_action_t action = resolve_knob(get_highest_layer(layer_state | default_layer_state), current_app,
                                         mod_state, index, clockwise);
     if (action.oled_brightness) {
         #if defined(OLED_ENABLE)
